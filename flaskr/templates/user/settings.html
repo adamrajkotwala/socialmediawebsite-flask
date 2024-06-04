@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Settings{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+    <div>
+        <p>Username: {{ g.user['username'] }}</p>
+        <p>Email: {{ g.user['email'] }}</p>
+    </div>
+
+    <p><a href="{{ url_for('auth.change_password', id=g.user['id']) }}"> Change Password </a></p>
+    <p><a href="{{ url_for('auth.delete_acc') }}"> Delete Account </a></p>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{{ user['username'] }}</h1>
+{% endblock %}
+
+{% block content %}
+  {% if user['bio'] %}
+    <div>
+      <p>{{ user['bio'] }}</p>
+    </div>
+  {% endif %}
+  {% for post in posts|reverse %}
+    <article class="post">
+      <header>
+        <div>
+          <h1>{{ post['title'] }}</h1>
+          <div class="about">{{ post['created'].strftime('%Y-%m-%d %I:%M %p') }}</div>
+        </div>
+      </header>
+      <p class="body">{{ post['body'] }}</p>
+      <div class = "stats">
+        {{ post['like_count'] }} Likes &nbsp;&nbsp;&nbsp;
+        {{ post['comment_count'] }} Comments</a> &nbsp;&nbsp;&nbsp; 
+        <br>
+        {% if has_liked_post(g.user['id'], post['id']) %}
+            <form action="{{ url_for('blog.like_post', id=post['id']) }}" method='POST'>
+              <div class= "like_button"><button type="submit">Unlike</button></div>
+            </form>
+        {% else %}
+            <form action="{{ url_for('blog.like_post', id=post['id']) }}" method='POST'>
+              <div class= "like_button"><button type="submit">Like</button></div>
+            </form>
+        {% endif %}
+        <a href="{{ url_for('blog.view_post', id=post['id']) }}"> Add a Comment </a>
+      </div>
+    </article>
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+{% endblock %}

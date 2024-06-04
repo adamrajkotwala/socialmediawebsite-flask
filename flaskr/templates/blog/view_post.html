@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}{{ post['title'] }}{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+    {% if post['body'] %}
+        <div>
+            <p>{{ post['body'] }}</p>
+        </div>
+    {% else %}
+        <br>
+    {% endif %}
+        <div class = "stats">
+            {{ post['like_count'] }} Likes &nbsp;&nbsp;&nbsp;
+            {{ post['comment_count'] }} Comments</a> &nbsp;&nbsp;&nbsp; 
+            <br>
+            {% if has_liked_post(g.user['id'], post['id']) %}
+            <form action="{{ url_for('blog.like_post', id=post['id']) }}" method='POST'>
+              <div class= "like_button"><button type="submit">Unlike</button></div>
+            </form>
+        {% else %}
+            <form action="{{ url_for('blog.like_post', id=post['id']) }}" method='POST'>
+              <div class= "like_button"><button type="submit">Like</button></div>
+            </form>
+        {% endif %}
+        </div>
+    <div>
+        <p>{{ 'Comments:' }}</p>
+        <form method="post">
+            <label for="comment">Add Comment</label>
+            <input name="comment" id="comment" required>
+            <br>
+            <input type="submit" value="Comment">
+        </form>
+    </div>
+{% endblock %}
