@@ -19,6 +19,7 @@ nav ul li a, nav ul li span, header .action { display: block; padding: 0.5rem; }
 .post .body { color: rgb(255, 255, 255); white-space: pre-line; }
 .post .stats { color: rgb(207, 206, 206); }
 .like_button { width: 100px; height: 25px; }
+.update_button { width: 100px; height: 25px; }
 .content:last-child { margin-bottom: 0; }
 .content form { margin: 1em 0; display: flex; flex-direction: column; }
 .content label { font-weight: bold; margin-bottom: 0.5em; }s
@@ -26,3 +27,28 @@ nav ul li a, nav ul li span, header .action { display: block; padding: 0.5rem; }
 .content textarea { min-height: 12em; resize: vertical; }
 input.danger { color: #cc2f2e; }
 input[type=submit] { align-self: start; min-width: 10em; }
+.header-container {
+    display: flex;
+    justify-content: flex-end;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .username {
+    margin-bottom: 20px; /* Adjust the spacing as needed */
+  }
+  
+  .profile-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .profile-actions form {
+    width: 100%;
+  }
+  
+  .profile-actions .action {
+    align-self: flex-end;
+    margin-top: 10px;
+  }

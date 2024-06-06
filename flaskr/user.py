@@ -1,6 +1,6 @@
 import functools
 
-from flask import (Blueprint, flash, g, redirect, render_template, request, url_for)
+from flask import (Blueprint, flash, g, redirect, render_template, request, url_for, send_file)
 
 from werkzeug.exceptions import abort
 
@@ -9,6 +9,8 @@ from flaskr.auth import login_required
 from flaskr.blog import has_liked_post
 
 from flaskr.db import get_db
+
+import io
 
 bp = Blueprint('user', __name__, url_prefix='/user')
 
@@ -33,6 +35,7 @@ def get_user_posts(user_id):
     return posts
 
 @bp.route('/<string:username>/profile_others', methods=('GET', 'POST'))
+@login_required
 def profile_others(username):
     # if request.method == 'POST':
     db = get_db()
@@ -52,7 +55,6 @@ def profile_others(username):
 def bio(id):
     if request.method == 'POST':
         user_bio = request.form['bio']
-        # user = get_user(id)
         user_id = id
         error = None
         if error == None:
@@ -63,8 +65,29 @@ def bio(id):
             )
             db.commit()
             return redirect(url_for('user.profile'))     
-    print('Test Passed')
     return render_template('user/bio.html', bio=bio)
+
+@bp.route('/profile_picture/<int:id>')
+def profile_picture(id):
+    db = get_db()
+    row = db.execute("SELECT profile_picture FROM user WHERE id = ?", (id,)).fetchone()
+    if row and row['profile_picture']:
+        profile_picture = row['profile_picture']
+        mimetype = get_mimetype(profile_picture)
+        return send_file(io.BytesIO(profile_picture), mimetype=mimetype)
+    return 'No profile picture found'
+
+def get_mimetype(image_data):
+    if image_data.startswith(b'\x89PNG\r\n\x1a\n'):
+        return 'image/png'
+    elif image_data.startswith(b'\xff\xd8\xff\xe0\x00\x10JFIF') or image_data.startswith(b'\xff\xd8\xff\xe1'):
+        return 'image/jpeg'
+    elif image_data.startswith(b'GIF87a') or image_data.startswith(b'GIF89a'):
+        return 'image/gif'
+    elif image_data.startswith(b'\x00\x00\x01\x00'):
+        return 'image/vnd.microsoft.icon'
+    else:
+        return 'image/jpeg'  # Default to JPEG if type not detected
 
 @bp.route('/settings', methods=('GET', 'POST'))
 @login_required

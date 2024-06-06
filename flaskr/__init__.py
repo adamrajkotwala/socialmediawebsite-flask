@@ -1,19 +1,12 @@
 import os
 
 from flask import Flask
-
-from flask_mail import Mail, Message
+from flask_mail import Mail
 
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
-    app.config['MAIL_SERVER'] = '10.200.146.27'
-    app.config['MAIL_PORT'] = 25
-    app.config['MAIL_USE_TLS'] = True
-    app.config['MAIL_USE_SSL'] = False
-    app.config['MAIL_USERNAME'] = 'greenbookhelp'
-    app.config['MAIL_PASSWORD'] = 'Testing$'
-    app.config['MAIL_DEFAULT_SENDER'] = 'greenbookhelp@gmail.com'
+
     app.config.from_mapping(
         SECRET_KEY='dev',
         DATABASE=os.path.join(app.instance_path, 'flaskr.sqlite'),
@@ -32,11 +25,16 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    # meow
-    @app.route('/meow')
-    def meow():
-        return 'meow'
-    
+    app.config['MAIL_SERVER'] = "10.200.146.27" 
+    app.config['MAIL_PORT'] = 25
+    app.config['MAIL_USE_TLS'] = True 
+    app.config['MAIL_USE_SSL'] = False 
+    app.config['MAIL_USERNAME'] = None 
+    app.config['MAIL_PASSWORD'] = None 
+    app.config['MAIL_DEFAULT_SENDER'] = 'default-sender@wv.gov' 
+
+    mail = Mail(app)
+
     from . import db
     db.init_app(app)
 
@@ -49,5 +47,8 @@ def create_app(test_config=None):
 
     from . import user
     app.register_blueprint(user.bp)
+
+    from . import uploads
+    app.register_blueprint(uploads.bp)
 
     return app

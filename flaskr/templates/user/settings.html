@@ -2,14 +2,28 @@
 
 {% block header %}
   <h1>{% block title %}Settings{% endblock %}</h1>
+  <a class="action" href="{{ url_for('auth.change_password', id=g.user['id']) }}"> Change Password </a>
+  <a class="action" href="{{ url_for('auth.delete_acc') }}"> Delete Account </a>
 {% endblock %}
 
 {% block content %}
     <div>
+        <p>Name: {{ g.user['first_name'] }} {{ g.user['last_name'] }}</p>
         <p>Username: {{ g.user['username'] }}</p>
         <p>Email: {{ g.user['email'] }}</p>
+        <p>Birthday: {{ g.user['birthday'] }}</p>
     </div>
 
-    <p><a href="{{ url_for('auth.change_password', id=g.user['id']) }}"> Change Password </a></p>
-    <p><a href="{{ url_for('auth.delete_acc') }}"> Delete Account </a></p>
+    <div class = "profile-picture-container">
+      {% if g.user['profile_picture'] %}
+        <img src="{{ url_for('user.profile_picture', id=g.user['id']) }}" alt="Profile Picture">
+      {% endif %}
+      <form action="{{ url_for('uploads.upload') }}" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="type" value="profile_picture">
+        <label for="file">Change Profile Picture:</label>
+        <input type="file" id="file" name="file">
+        <br>
+        <div class= "update_button"><button type="submit">Update</button></div>
+      </form>
+    </div>
 {% endblock %}

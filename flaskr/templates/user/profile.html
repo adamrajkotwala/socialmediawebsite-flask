@@ -6,16 +6,21 @@
 {% endblock %}
 
 {% block content %}
+  {% if g.user['profile_picture'] %}
+    <br>
+    <img src="{{ url_for('user.profile_picture', id=g.user['id']) }}" alt="Profile Picture">
+  {% endif %}
   {% if g.user['bio'] %}
     <div>
       <p>{{ g.user['bio'] }}</p>
     </div>
   {% endif %}
+  <hr>
   {% for post in posts|reverse %}
     <article class="post">
       <header>
         <div>
-          <h1>{{ post['title'] }}</h1>
+          <h1><a href="{{ url_for('blog.view_post', id=post['id']) }}">{{ post['title'] }}</a></h1>
           <div class="about">{{ post['created'].strftime('%Y-%m-%d %I:%M %p') }}</div>
         </div>
         {% if g.user['id'] == post['author_id'] %}

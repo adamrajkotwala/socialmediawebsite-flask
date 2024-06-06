@@ -10,6 +10,10 @@ from flaskr.db import get_db
 
 bp = Blueprint('blog', __name__)
 
+from flask import Flask
+
+app = Flask(__name__)
+
 @bp.route('/')
 def index():
     db = get_db()
@@ -99,10 +103,115 @@ def delete(id):
     db.commit()
     return redirect(url_for('blog.index'))
 
+def get_comments(id):
+    """Retrieve all comments made by a specific user."""
+    query = (
+        'SELECT id, post_id, author_id, author_username, body, created, like_count, comment_count'
+        ' FROM comment'
+        ' WHERE post_id = ?'
+    )
+    comments = get_db().execute(query, (id,)).fetchall()
+    return comments
+
+
+def add_comment(post, comment_body):
+    db = get_db()
+    db.execute(
+        'INSERT INTO comment (body, author_id, post_id, author_username)'
+        ' VALUES (?, ?, ?, ?)',
+        (comment_body, g.user['id'], post['id'], g.user['username'])
+    )
+    db.commit()
+    db.execute(
+        'UPDATE post SET comment_count = ?'
+        ' WHERE id = ?',
+        (post['comment_count']+1, post['id'])
+    )
+    db.commit()
+    return
+
+def get_comment(id, check_author=True):
+    comment = get_db().execute(
+        'SELECT p.id, body, created, author_id, username, like_count, comment_count'
+        ' FROM comment p JOIN user u ON p.author_id = u.id'
+        ' WHERE p.id = ?',
+        (id,)
+    ).fetchone()
+
+    if comment is None:
+        abort(404, f"comment id {id} doesn't exist.")
+
+    if check_author and comment['author_id'] != g.user['id']:
+        abort(403)
+
+    return comment
+
+@bp.route('/<int:post_id>/<int:id>/update_comment', methods=('GET', 'POST'))
+@login_required
+def update_comment(post_id, id):
+    comment = get_comment(id)
+    post = get_post(post_id, check_author=False)
+    if request.method == 'POST':
+        body = request.form['body']
+        error = None
+
+        if not body:
+            error = 'Edit is required.'
+
+        if error is not None:
+            flash(error)
+        else:
+            db = get_db()
+            db.execute(
+                'UPDATE comment SET body = ?'
+                ' WHERE id = ?',
+                (body, id)
+            )
+            db.commit()
+            return redirect(url_for('blog.index'))
+
+    return render_template('blog/update_comment.html', post=post, comment=comment)
+
+@bp.route('/<int:post_id>/<int:id>/delete_comment', methods=('POST',))
+@login_required
+def delete_comment(post_id, id):
+    # comment = get_comment(id)
+    db = get_db()
+    db.execute('DELETE FROM comment WHERE id = ?', (id,))
+    db.commit()
+    # db.execute('DELETE FROM like WHERE post_id = ?', (id,))
+    # db.commit()
+    post = get_post(post_id, check_author=False)
+    db.execute(
+        'UPDATE post SET comment_count = ?'
+        ' WHERE id = ?',
+        (post['comment_count']-1, post['id'])
+    )
+    db.commit()
+    posts = db.execute(
+        'SELECT p.id, title, body, created, author_id, username, like_count, comment_count'
+        ' FROM post p JOIN user u ON p.author_id = u.id'
+        ' ORDER BY created DESC'
+    ).fetchall()
+    return render_template('blog/index.html', posts=posts, has_liked_post=has_liked_post)
+
 @bp.route('/<int:id>/view_post', methods=('GET', 'POST'))
+@login_required
 def view_post(id):
     post = get_post(id, check_author=False)
-    return render_template('blog/view_post.html', post=post, has_liked_post=has_liked_post)
+    comments = get_comments(id)
+    if request.method == 'POST':
+        comment_body = request.form['comment']
+        error = None
+        if not comment_body:
+            error = 'Comment is required.'
+        if error is not None:
+            flash(error)
+        else:
+            add_comment(post, comment_body)
+        return f"<script>window.location = '{request.referrer}'</script>"
+    else:
+        return render_template('blog/view_post.html', post=post, has_liked_post=has_liked_post, comments=comments)
 
 @bp.route('/<int:id>/like_post', methods=('POST',))
 @login_required
