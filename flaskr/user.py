@@ -10,6 +10,8 @@ from flaskr.blog import has_liked_post
 
 from flaskr.db import get_db
 
+from PIL import Image, ImageDraw
+
 import io
 
 bp = Blueprint('user', __name__, url_prefix='/user')
@@ -77,6 +79,31 @@ def profile_picture(id):
         return send_file(io.BytesIO(profile_picture), mimetype=mimetype)
     return 'No profile picture found'
 
+@bp.route('/resize_small/<int:id>')
+def resize_small(id):
+    db = get_db()
+    row = db.execute("SELECT profile_picture FROM user WHERE id = ?", (id,)).fetchone()
+    if row and row['profile_picture']:
+        profile_picture = row['profile_picture']
+        img = Image.open(io.BytesIO(profile_picture))
+        img = img.resize((50, 50))
+
+        # Create a mask in the shape of a circle
+        mask = Image.new('L', (50, 50), 0)
+        draw = ImageDraw.Draw(mask)
+        draw.ellipse((0, 0, 50, 50), fill=255)
+
+        # Apply the mask to the image
+        img.putalpha(mask)
+
+        img_byte_array = io.BytesIO()
+        img.save(img_byte_array, format='PNG')  # Save as PNG to preserve transparency
+        img_byte_array.seek(0)
+
+        mimetype = 'image/png'
+        return send_file(img_byte_array, mimetype=mimetype)
+    return 'No profile picture found', 404
+
 def get_mimetype(image_data):
     if image_data.startswith(b'\x89PNG\r\n\x1a\n'):
         return 'image/png'
@@ -93,3 +120,14 @@ def get_mimetype(image_data):
 @login_required
 def settings():
     return render_template('user/settings.html')
+
+@bp.route('/<int:id>/delete_pfp', methods=('POST',))
+@login_required
+def delete_pfp(id):
+    db = get_db()
+    db.execute(
+        "UPDATE user SET profile_picture = ? WHERE id = ?",
+        (None, id),
+    )
+    db.commit()
+    return redirect(url_for('user.settings'))

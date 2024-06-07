@@ -27,28 +27,57 @@ nav ul li a, nav ul li span, header .action { display: block; padding: 0.5rem; }
 .content textarea { min-height: 12em; resize: vertical; }
 input.danger { color: #cc2f2e; }
 input[type=submit] { align-self: start; min-width: 10em; }
+
+.red-text-button {
+  color: red;
+  background-color: white;
+  width: 175px;
+  height: 25px;
+}
+
 .header-container {
-    display: flex;
-    justify-content: flex-end;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .username {
-    margin-bottom: 20px; /* Adjust the spacing as needed */
-  }
-  
-  .profile-actions {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .profile-actions form {
-    width: 100%;
-  }
-  
-  .profile-actions .action {
-    align-self: flex-end;
-    margin-top: 10px;
-  }
+  display: flex;
+  justify-content: flex-end;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.username {
+  margin-bottom: 20px;
+}
+
+.small_pfp {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.profile-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.profile-actions form {
+  width: 100%;
+}
+.profile-actions .action {
+  align-self: flex-end;
+  margin-top: 10px;
+}
+
+.centered-form {
+  display: flex;
+  flex-direction: column; /* Stack elements vertically */
+  align-items: center; /* Center elements horizontally */
+}
+
+.centered-form input[type="submit"] {
+  color: rgb(0, 0, 0);
+  border: none;
+  cursor: pointer;
+  align-items: center;
+}
+
+.comment_button {
+  align-items: center;
+  background-color: #ffffff;
+}

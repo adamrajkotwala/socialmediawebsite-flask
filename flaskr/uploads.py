@@ -43,7 +43,19 @@ def upload():
             return f"<script>window.location = '{request.referrer}'</script>"
         
 def crop_square(image_data):
-    img = Image.open(io.BytesIO(image_data))
+    try:
+        img = Image.open(io.BytesIO(image_data))
+    except:
+        flash('Image could not be uploaded')
+        return None
+
+    # Ensure the image is in RGB mode
+    if img.mode == 'RGBA':
+        # Create a white background image
+        background = Image.new("RGB", img.size, (255, 255, 255))
+        # Paste the RGBA image onto the background image
+        background.paste(img, mask=img.split()[3])  # 3 is the alpha channel
+        img = background
 
     width, height = img.size
     new_size = min(width, height)

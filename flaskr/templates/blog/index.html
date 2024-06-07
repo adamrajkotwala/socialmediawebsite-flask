@@ -6,20 +6,28 @@
     <a class="action" href="{{ url_for('blog.create') }}">New</a>
   {% endif %}
 {% endblock %}
-
 {% block content %}
   {% for post in posts %}
     <article class="post">
+      <br>
+      <div class = "small_pfp">
+        {% if g.user == post['author_id'] and g.user['profile_picture'] %}
+          <img src="{{ url_for('user.resize_small', id=g.user['id']) }}" alt="Profile Picture">
+        {% elif has_pfp(post['author_id']) %}
+          <img src="{{ url_for('user.resize_small', id=post['author_id']) }}" alt="Profile Picture">
+        {% endif %}
+      </div>
       <header>
         <div>
-          <h1><a href="{{ url_for('blog.view_post', id=post['id']) }}">{{ post['title'] }}</a></h1>
+          <h1><a href="{{ url_for('blog.view_post', id=post['id']) }}">{{ post['title'] }}</a>
+          </h1>
           <div class="about">by
             {% if g.user['id'] != post['author_id'] %}
               <a href="{{ url_for('user.profile_others', username=post['username']) }}">{{ post['username'] }}</a>
             {% else %}
               <a href="{{ url_for('user.profile', username=post['username']) }}">{{ post['username'] }}</a>
             {% endif %}
-            on {{ post['created'].strftime('%Y-%m-%d %I:%M %p') }}
+              on {{ post['created'] }}
           </div>
         </div>
         {% if g.user['id'] == post['author_id'] %}
@@ -28,8 +36,16 @@
       </header>
       <p class="body">{{ post['body'] }}</p>
       <div class = "stats">
-        {{ post['like_count'] }} Likes &nbsp;&nbsp;&nbsp;
-        {{ post['comment_count'] }} Comments</a> &nbsp;&nbsp;&nbsp; 
+        {% if post['like_count'] != 1 %} 
+          {{ post['like_count'] }} Likes</a> &nbsp;&nbsp;&nbsp;
+        {% else %}
+          {{ post['like_count'] }} Like</a> &nbsp;&nbsp;&nbsp;
+        {% endif %}
+        {% if post['comment_count'] != 1 %} 
+          {{ post['comment_count'] }} Comments</a> &nbsp;&nbsp;&nbsp;
+        {% else %}
+          {{ post['comment_count'] }} Comment</a> &nbsp;&nbsp;&nbsp;
+        {% endif %} 
         <br>
         {% if has_liked_post(g.user['id'], post['id']) %}
             <form action="{{ url_for('blog.like_post', id=post['id']) }}" method='POST'>

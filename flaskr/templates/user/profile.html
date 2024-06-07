@@ -2,6 +2,7 @@
 
 {% block header %}
   <h1>{% block title %}{{ g.user['username'] }}{% endblock %}</h1>
+  <a class="action" href="{{ url_for('user.settings') }}">Change Profile Picture</a>
   <a class="action" href="{{ url_for('user.bio', id=g.user['id']) }}">Edit Bio</a>
 {% endblock %}
 
@@ -15,13 +16,13 @@
       <p>{{ g.user['bio'] }}</p>
     </div>
   {% endif %}
-  <hr>
+  {% if g.user['bio'] or g.user['profile_picture'] %}<hr>{% endif %}
   {% for post in posts|reverse %}
     <article class="post">
       <header>
         <div>
           <h1><a href="{{ url_for('blog.view_post', id=post['id']) }}">{{ post['title'] }}</a></h1>
-          <div class="about">{{ post['created'].strftime('%Y-%m-%d %I:%M %p') }}</div>
+          <div class="about">{{ post['created'] }}</div>
         </div>
         {% if g.user['id'] == post['author_id'] %}
           <a class="action" href="{{ url_for('blog.update', id=post['id']) }}">Edit</a>
@@ -29,8 +30,16 @@
       </header>
       <p class="body">{{ post['body'] }}</p>
       <div class = "stats">
-        {{ post['like_count'] }} Likes &nbsp;&nbsp;&nbsp;
-        {{ post['comment_count'] }} Comments</a> &nbsp;&nbsp;&nbsp; 
+        {% if post['like_count'] != 1 %} 
+          {{ post['like_count'] }} Likes</a> &nbsp;&nbsp;&nbsp;
+        {% else %}
+          {{ post['like_count'] }} Like</a> &nbsp;&nbsp;&nbsp;
+        {% endif %}
+        {% if post['comment_count'] != 1 %} 
+          {{ post['comment_count'] }} Comments</a> &nbsp;&nbsp;&nbsp;
+        {% else %}
+          {{ post['comment_count'] }} Comment</a> &nbsp;&nbsp;&nbsp;
+        {% endif %}
         <br>
         {% if has_liked_post(g.user['id'], post['id']) %}
             <form action="{{ url_for('blog.like_post', id=post['id']) }}" method='POST'>

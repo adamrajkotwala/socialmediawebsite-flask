@@ -51,4 +51,7 @@ def create_app(test_config=None):
     from . import uploads
     app.register_blueprint(uploads.bp)
 
+    from . import inbox
+    app.register_blueprint(inbox.bp)
+
     return app

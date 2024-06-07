@@ -8,7 +8,7 @@
     {% else %}
       <a href="{{ url_for('user.profile', username=post['username']) }}">{{ post['username'] }}</a>
     {% endif %}
-    on {{ post['created'].strftime('%Y-%m-%d %I:%M %p') }}
+    on {{ post['created'] }}
   </div>
 {% endblock %}
 
@@ -21,8 +21,16 @@
         <br>
     {% endif %}
         <div class = "stats">
-            {{ post['like_count'] }} Likes &nbsp;&nbsp;&nbsp;
-            {{ post['comment_count'] }} Comments</a> &nbsp;&nbsp;&nbsp;
+            {% if post['like_count'] != 1 %} 
+              {{ post['like_count'] }} Likes</a> &nbsp;&nbsp;&nbsp;
+            {% else %}
+              {{ post['like_count'] }} Like</a> &nbsp;&nbsp;&nbsp;
+            {% endif %}
+            {% if post['comment_count'] != 1 %} 
+              {{ post['comment_count'] }} Comments</a> &nbsp;&nbsp;&nbsp;
+            {% else %}
+              {{ post['comment_count'] }} Comment</a> &nbsp;&nbsp;&nbsp;
+            {% endif %}
             {% if g.user['id'] == post['author_id'] %}
               <a class="action" href="{{ url_for('blog.update', id=post['id']) }}">Edit</a>
             {% endif %} 
@@ -37,8 +45,9 @@
             </form>
         {% endif %}
         </div>
+        <hr>
     <div>
-        <p>{{ 'Comments:' }}</p>
+        <p>{{ 'Comments' }}<hr></p>
         {% for comment in comments %}
         <article class="post">
             <header>
@@ -50,41 +59,27 @@
                   {% else %}
                     <a href="{{ url_for('user.profile', username=comment['author_username']) }}">{{ comment['author_username'] }}</a>
                   {% endif %}
-                  on {{ post['created'].strftime('%Y-%m-%d %I:%M %p') }}
+                  on {{ post['created'] }}
                 </div>
               </div>
-              <!-- {% if g.user['id'] == comment['author_id'] %}
-                <a class="action" href="{{ url_for('blog.update', id=comment['id']) }}">Edit</a>
-              {% endif %} -->
             </header>
             <p class="body">{{ comment['body'] }}</p>
             <div class = "stats">
-              <!-- {{ post['like_count'] }} Likes &nbsp;&nbsp;&nbsp;
-              {{ post['comment_count'] }} Comments</a> &nbsp;&nbsp;&nbsp; 
-              <br>
-              {% if has_liked_post(g.user['id'], post['id']) %}
-                  <form action="{{ url_for('blog.like_post', id=post['id']) }}" method='POST'>
-                    <div class= "like_button"><button type="submit">Unlike</button></div>
-                  </form>
-              {% else %}
-                  <form action="{{ url_for('blog.like_post', id=post['id']) }}" method='POST'>
-                    <div class= "like_button"><button type="submit">Like</button></div>
-                  </form>
-              {% endif %} -->
+            
               {% if g.user['id'] == comment['author_id'] %}
                 <a class="action" href="{{ url_for('blog.update_comment', post_id=post['id'], id=comment['id']) }}">Edit</a>
                 &nbsp;
               {% endif %}
-              Reply
-              <!-- <a href="{{ url_for('blog.view_post', id=post['id']) }}"> Reply </a> -->
+              <a class="action" href="{{ url_for('blog.update_comment', post_id=post['id'], id=comment['id']) }}">Reply</a>
             </div>
         </article>
+        <hr>
         {% endfor %}
-        <form method="post">
+        <form class="centered-form" method="post">
             <label for="comment">Add Comment</label>
             <input name="comment" id="comment" required>
             <br>
-            <input type="submit" value="Comment">
+            <div class= "comment_button"><input type="submit" value="Comment"></div>
         </form>
     </div>
 {% endblock %}
