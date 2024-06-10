@@ -50,6 +50,14 @@
         <p>{{ 'Comments' }}<hr></p>
         {% for comment in comments %}
         <article class="post">
+          <br>
+          <div class = "small_pfp">
+            {% if g.user == comment['author_id'] and g.user['profile_picture'] %}
+              <img src="{{ url_for('user.resize_small', id=g.user['id']) }}" alt="Profile Picture">
+            {% elif has_pfp(comment['author_id']) %}
+              <img src="{{ url_for('user.resize_small', id=comment['author_id']) }}" alt="Profile Picture">
+            {% endif %}
+          </div>
             <header>
               <div>
                 <h1>{{ comment['author_username'] }}</h1>

@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Results{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+    <ul>
+        {% for user in results %}
+            <br>
+            <div class = "small_pfp">
+                <img src="{{ url_for('user.resize_small', id=user['id']) }}" alt="Profile Picture">
+                &nbsp;&nbsp;
+                <a href="{{ url_for('user.profile_others', username=user['username']) }}">{{ user['username'] }}</a>
+            </div>
+        {% endfor %}
+    </ul>
+{% endblock %}

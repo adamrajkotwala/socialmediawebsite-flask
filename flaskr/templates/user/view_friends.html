@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Friends{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  {% for friend in friends %}
+    <article class="friend">
+      <br>
+      <div class = "small_pfp">
+        <img src="{{ url_for('user.resize_small', id=friend['id']) }}" alt="Profile Picture">
+        &nbsp;&nbsp;
+        <a href="{{ url_for('user.profile_others', username=friend['username']) }}">{{ friend['username'] }}</a>
+      </div>
+      <header>
+      </header>
+    </article>
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+{% endblock %}

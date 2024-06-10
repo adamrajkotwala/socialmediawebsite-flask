@@ -2,7 +2,34 @@
 
 {% block header %}
   <h1>{{ user['username'] }}</h1>
-  <a class="action" href="{{ url_for('user.bio', id=g.user['id']) }}">Send Friend Request</a>
+  {% if relationship['status'] == 2 %}
+    {% if user['friend_count'] != 1 %} 
+      <a class="action" href="{{ url_for('user.view_friends', id=user['id']) }}">{{ user['friend_count'] }} Friends</a>
+    {% else %}
+      <a class="action" href="{{ url_for('user.view_friends', id=user['id']) }}">{{ user['friend_count'] }} Friend</a>
+    {% endif %}
+  {% endif %}
+  {% if relationship is none %}
+    <form action="{{ url_for('user.send_friend_request', friend_id=user['id']) }}" method="POST">
+      <button type="submit">Send Friend Request</button>
+    </form>
+  {% elif relationship['status'] == 1 %}
+    {% if relationship['first_user_id'] == user['id'] %}
+      <form action="{{ url_for('user.accept_friend_request', friend_id=user['id']) }}" method="POST">
+        <button type="submit">Accept Friend Request</button>
+      </form>
+    {% else %}
+      <p>Friend request sent</p>
+    {% endif %}
+  {% elif relationship['status'] == 2 %}
+    <form action="{{ url_for('user.unfriend', friend_id=user['id']) }}" method="POST">
+      <button type="submit">Unfriend</button>
+    </form>
+  {% else %}
+    <form action="{{ url_for('user.accept_friend_request', friend_id=user['id']) }}" method="POST">
+      <button type="submit">Accept Friend Request</button>
+    </form>
+  {% endif %}
 {% endblock %}
 
 {% block content %}

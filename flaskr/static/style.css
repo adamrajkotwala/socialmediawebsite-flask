@@ -81,3 +81,23 @@ input[type=submit] { align-self: start; min-width: 10em; }
   align-items: center;
   background-color: #ffffff;
 }
+
+#search-li {
+  display: inline-block;
+  margin-left: 10px;
+  margin-top: 6px;
+}
+
+#search-form {
+  display: flex;
+  align-items: center;
+}
+
+#search-form input[type="text"],
+#search-form button {
+  margin: 0;
+}
+
+#search-form button {
+  margin-left: 5px; /* Add some space between input and button */
+}

@@ -1,5 +1,5 @@
 from flask import (
-    Blueprint, flash, g, redirect, render_template, request, url_for
+    Blueprint, flash, g, redirect, render_template, request, url_for, session
 )
 
 from werkzeug.exceptions import abort
@@ -98,7 +98,7 @@ def update(id):
                 (title, body, id)
             )
             db.commit()
-            return redirect(url_for('blog.index'))
+            return redirect(url_for('blog.view_post', id=id))
 
     return render_template('blog/update.html', post=post)
 
@@ -203,7 +203,7 @@ def delete_comment(post_id, id):
         ' FROM post p JOIN user u ON p.author_id = u.id'
         ' ORDER BY created DESC'
     ).fetchall()
-    return render_template('blog/index.html', posts=posts, has_liked_post=has_liked_post)
+    return redirect(url_for('blog.view_post', id=post_id))
 
 @bp.route('/<int:id>/view_post', methods=('GET', 'POST'))
 @login_required
@@ -221,12 +221,14 @@ def view_post(id):
             add_comment(post, comment_body)
         return f"<script>window.location = '{request.referrer}'</script>"
     else:
-        return render_template('blog/view_post.html', post=post, has_liked_post=has_liked_post, comments=comments)
+        return render_template('blog/view_post.html', post=post, has_liked_post=has_liked_post, comments=comments, has_pfp=has_pfp)
 
 @bp.route('/<int:id>/like_post', methods=('POST',))
 @login_required
 def like_post(id):
     post = get_post(id, check_author=False)
+    scroll_position = session.get('scrollPosition')
+    session.pop('scrollPosition', None)
     if has_liked_post(g.user['id'], id) != True:
         db = get_db()
         db.execute(
@@ -240,7 +242,7 @@ def like_post(id):
             (post['like_count']+1, id)
         )
         db.commit()
-        return f"<script>window.location = '{request.referrer}'</script>"
+        return f"<script>window.location = '{request.referrer}?scroll_position={scroll_position}'</script>"
     else:
         db = get_db()
         db.execute(
@@ -253,7 +255,7 @@ def like_post(id):
             (post['like_count']-1, id)
         )
         db.commit()
-        return f"<script>window.location = '{request.referrer}'</script>"
+        return f"<script>window.location = '{request.referrer}?scroll_position={scroll_position}'</script>"
 
 def has_liked_post(user_id, post_id):
     post = get_post(post_id, check_author=False)

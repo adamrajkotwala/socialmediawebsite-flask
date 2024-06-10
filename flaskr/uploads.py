@@ -34,6 +34,7 @@ def upload():
 
     if error is not None:
         flash(error)
+        return f"<script>window.location = '{request.referrer}'</script>"
     else:
         if type == 'profile_picture':
             cropped_image_data = crop_square(file.read())

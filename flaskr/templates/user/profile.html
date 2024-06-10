@@ -2,6 +2,11 @@
 
 {% block header %}
   <h1>{% block title %}{{ g.user['username'] }}{% endblock %}</h1>
+  {% if g.user['friend_count'] != 1 %} 
+    <a class="action" href="{{ url_for('user.view_friends', id=g.user['id']) }}">{{ g.user['friend_count'] }} Friends</a>
+  {% else %}
+    <a class="action" href="{{ url_for('user.view_friends', id=g.user['id']) }}">{{ g.user['friend_count'] }} Friend</a>
+  {% endif %}
   <a class="action" href="{{ url_for('user.settings') }}">Change Profile Picture</a>
   <a class="action" href="{{ url_for('user.bio', id=g.user['id']) }}">Edit Bio</a>
 {% endblock %}

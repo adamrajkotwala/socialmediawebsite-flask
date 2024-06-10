@@ -15,7 +15,8 @@ CREATE TABLE user (
   last_name TEXT NOT NULL,
   birthday DATE,
   bio TEXT,
-  profile_picture BLOB
+  profile_picture BLOB,
+  friend_count INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE post (

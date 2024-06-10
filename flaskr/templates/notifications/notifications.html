@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Notifications{% endblock %}</h1>
+  <a class="action" href="{{ url_for('notifications.new_message') }}"> New Message </a>
+{% endblock %}
+
+{% block content %}
+ 
+{% endblock %}

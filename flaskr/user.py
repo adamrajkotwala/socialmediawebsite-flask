@@ -1,6 +1,6 @@
 import functools
 
-from flask import (Blueprint, flash, g, redirect, render_template, request, url_for, send_file)
+from flask import (Blueprint, flash, g, redirect, render_template, request, url_for, send_file, jsonify)
 
 from werkzeug.exceptions import abort
 
@@ -36,6 +36,13 @@ def get_user_posts(user_id):
     posts = get_db().execute(query, (user_id,)).fetchall()
     return posts
 
+def get_user(id):
+    db = get_db()
+    user = db.execute(
+        'SELECT * FROM user WHERE id = ?', (id,)
+    ).fetchone()
+    return user
+
 @bp.route('/<string:username>/profile_others', methods=('GET', 'POST'))
 @login_required
 def profile_others(username):
@@ -49,8 +56,10 @@ def profile_others(username):
         abort(404)
 
     posts = get_user_posts(user_id=other_user['id'])
+
+    relationship = get_relationship(friend_id=other_user['id'])
     
-    return render_template('user/profile_others.html', user=other_user, posts=posts, has_liked_post=has_liked_post)
+    return render_template('user/profile_others.html', user=other_user, posts=posts, relationship=relationship, has_liked_post=has_liked_post)
 
 @bp.route('/<int:id>/bio', methods=('GET', 'POST'))
 @login_required
@@ -131,3 +140,117 @@ def delete_pfp(id):
     )
     db.commit()
     return redirect(url_for('user.settings'))
+
+@bp.route('/<int:friend_id>/send_friend_request', methods=('POST',))
+@login_required
+def send_friend_request(friend_id):
+    db = get_db()
+    db.execute(
+        'INSERT INTO relationship (first_user_id, second_user_id, status)'
+        ' VALUES (?, ?, ?)',
+        (g.user['id'], friend_id, 1)
+    )
+    db.commit()
+    return f"<script>window.location = '{request.referrer}'</script>"
+
+@bp.route('/<int:friend_id>/accept_friend_request', methods=('POST',))
+@login_required
+def accept_friend_request(friend_id):
+    db = get_db()
+    friend = get_user(friend_id)
+    db.execute(
+        'UPDATE relationship SET status = 2 WHERE first_user_id = ? AND second_user_id = ?',
+        (friend_id, g.user['id'])
+    )
+    db.commit()
+    db.execute(
+        'UPDATE user SET friend_count = ? WHERE id = ?',
+        (g.user['friend_count']+1, g.user['id'])
+    )
+    db.commit()
+    db.execute(
+        'UPDATE user SET friend_count = ? WHERE id = ?',
+        (friend['friend_count']+1, friend_id)
+    )
+    db.commit()
+    return f"<script>window.location = '{request.referrer}'</script>"
+
+@bp.route('/<int:friend_id>/unfriend', methods=('POST',))
+@login_required
+def unfriend(friend_id):
+    db = get_db()
+    friend = get_user(friend_id)
+    db.execute(
+        'DELETE FROM relationship '
+        'WHERE (first_user_id = ? AND second_user_id = ?) '
+        'OR (first_user_id = ? AND second_user_id = ?)',
+        (g.user['id'], friend_id, friend_id, g.user['id'])
+    )
+    db.commit()
+    db.execute(
+        'UPDATE user SET friend_count = ? WHERE id = ?',
+        (g.user['friend_count']-1, g.user['id'])
+    )
+    db.commit()
+    db.execute(
+        'UPDATE user SET friend_count = ? WHERE id = ?',
+        (friend['friend_count']-1, friend_id)
+    )
+    db.commit()
+    return f"<script>window.location = '{request.referrer}'</script>"
+
+@login_required
+def get_relationship(friend_id):
+    db = get_db()
+    user_id = g.user['id']
+    relationship = db.execute(
+        'SELECT * FROM relationship '
+        'WHERE (first_user_id = ? AND second_user_id = ?) '
+        'OR (first_user_id = ? AND second_user_id = ?)',
+        (user_id, friend_id, friend_id, user_id)
+    ).fetchone()
+    return relationship
+
+@bp.route('/<int:id>/view_friends', methods=('GET',))
+@login_required
+def view_friends(id):
+    db = get_db()
+    user = get_user(id)
+
+    friends = db.execute(
+        'SELECT u.id, u.username '
+        'FROM user u '
+        'JOIN relationship r ON (u.id = r.first_user_id OR u.id = r.second_user_id) '
+        'WHERE (r.first_user_id = ? OR r.second_user_id = ?) AND r.status = 2 '
+        'AND u.id != ?',
+        (id, id, id)
+    ).fetchall()
+
+    error = None
+
+    if user['friend_count'] == 0:
+        error = "No friends"
+        
+    if error is not None:
+        flash(error)
+        return f"<script>window.location = '{request.referrer}'</script>"
+    else:
+        return render_template('user/view_friends.html', friends=friends)
+    
+@bp.route('/search', methods=['GET'])
+@login_required
+def search():
+    query = request.args.get('query', '')
+
+    if query:
+        db = get_db()
+        results = db.execute(
+            "SELECT id, username, first_name, last_name "
+            "FROM user "
+            "WHERE username LIKE ? OR first_name LIKE ? OR last_name LIKE ?",
+            ('%' + query + '%', '%' + query + '%', '%' + query + '%')
+        ).fetchall()
+    else:
+        results = []
+
+    return render_template('user/search.html', results=results)
