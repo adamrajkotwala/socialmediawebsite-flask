@@ -49,11 +49,15 @@ def register():
         first_name = request.form['first_name']
         last_name = request.form['last_name']
         birthday_str = request.form['birthday']
-        birthday = datetime.strptime(birthday_str, '%Y-%m-%d').date()
-
-        db = get_db()
 
         error = None
+
+        try:
+            birthday = datetime.strptime(birthday_str, '%Y-%m-%d').date()
+        except ValueError:
+            error = "Invalid date format. Please use YYYY-MM-DD."
+
+        db = get_db()
 
         if not email:
             error = 'Email is required.'
@@ -61,16 +65,16 @@ def register():
             error = 'Username is required.'
         elif not password:
             error = 'Password is required.'
-        elif len(password) < 8:
-            error = 'Password must be at least 8 characters long.'
-        elif not re.search(r'[A-Z]', password):
-            error = 'Password must contain at least one uppercase letter.'
-        elif not re.search(r'[a-z]', password):
-            error = 'Password must contain at least one lowercase letter.'
-        elif not re.search(r'[0-9]', password):
-            error = 'Password must contain at least one digit.'
-        elif not password_con:
-            error = 'Password Confirmation is required.'
+        # elif len(password) < 8:
+        #     error = 'Password must be at least 8 characters long.'
+        # elif not re.search(r'[A-Z]', password):
+        #     error = 'Password must contain at least one uppercase letter.'
+        # elif not re.search(r'[a-z]', password):
+        #     error = 'Password must contain at least one lowercase letter.'
+        # elif not re.search(r'[0-9]', password):
+        #     error = 'Password must contain at least one digit.'
+        # elif not password_con:
+        #     error = 'Password Confirmation is required.'
         elif password != password_con:
             error = 'Passwords do not match.'
         elif not first_name:
@@ -79,6 +83,8 @@ def register():
             error = "Last name is required."
         elif not birthday_str:
             error = "Birthday is required"
+    
+
 
         if error is None:
             existing_user = db.execute(

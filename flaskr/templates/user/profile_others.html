@@ -15,18 +15,20 @@
     </form>
   {% elif relationship['status'] == 1 %}
     {% if relationship['first_user_id'] == user['id'] %}
-      <form action="{{ url_for('user.accept_friend_request', friend_id=user['id']) }}" method="POST">
+      <form id="relationship" action="{{ url_for('user.accept_friend_request', friend_id=user['id']) }}" method="POST">
         <button type="submit">Accept Friend Request</button>
       </form>
     {% else %}
-      <p>Friend request sent</p>
+      <form id="relationship" action="{{ url_for('user.cancel_friend_request', friend_id=user['id']) }}" method="POST">
+        <button type="submit">Cancel Friend Request</button>
+      </form>
     {% endif %}
   {% elif relationship['status'] == 2 %}
-    <form action="{{ url_for('user.unfriend', friend_id=user['id']) }}" method="POST">
+    <form id="relationship" action="{{ url_for('user.unfriend', friend_id=user['id']) }}" method="POST">
       <button type="submit">Unfriend</button>
     </form>
   {% else %}
-    <form action="{{ url_for('user.accept_friend_request', friend_id=user['id']) }}" method="POST">
+    <form id="relationship" action="{{ url_for('user.accept_friend_request', friend_id=user['id']) }}" method="POST">
       <button type="submit">Accept Friend Request</button>
     </form>
   {% endif %}
@@ -48,7 +50,14 @@
       <header>
         <div>
           <h1><a href="{{ url_for('blog.view_post', id=post['id']) }}">{{ post['title'] }}</a></h1>
-          <div class="about">{{ post['created'] }}</div>
+          <br>
+          <div class="about">
+            {% if post['is_edited'] != 1 %} 
+              {{ post['created'] }}
+            {% else %}
+              edited on {{ post['created'] }}
+            {% endif %}
+          </div>
         </div>
       </header>
       <p class="body">{{ post['body'] }}</p>

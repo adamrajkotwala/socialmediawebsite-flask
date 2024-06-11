@@ -22,7 +22,7 @@ app = Flask(__name__)
 def index():
     db = get_db()
     posts = db.execute(
-        'SELECT p.id, title, body, created, created_stamp, author_id, username, like_count, comment_count'
+        'SELECT p.id, title, body, is_edited, created, created_stamp, author_id, username, like_count, comment_count'
         ' FROM post p JOIN user u ON p.author_id = u.id'
         ' ORDER BY created_stamp DESC'
     ).fetchall()
@@ -40,7 +40,7 @@ def create():
 
         current_time = datetime.now(timezone)
 
-        formatted_time = current_time.strftime('%m/%d/%Y %I:%M %p')
+        formatted_time = current_time.strftime('%m/%d/%Y @ %I:%M %p')
 
         if not title:
             error = 'Title is required.'
@@ -61,7 +61,7 @@ def create():
 
 def get_post(id, check_author=True):
     post = get_db().execute(
-        'SELECT p.id, title, body, created, created_stamp, author_id, username, like_count, comment_count'
+        'SELECT p.id, title, body, is_edited, created, created_stamp, author_id, username, like_count, comment_count'
         ' FROM post p JOIN user u ON p.author_id = u.id'
         ' WHERE p.id = ?',
         (id,)
@@ -91,11 +91,14 @@ def update(id):
         if error is not None:
             flash(error)
         else:
+            timezone = pytz.timezone('America/New_York')
+            current_time = datetime.now(timezone)
+            formatted_time = current_time.strftime('%m/%d/%Y @ %I:%M %p')
             db = get_db()
             db.execute(
-                'UPDATE post SET title = ?, body = ?'
+                'UPDATE post SET title = ?, body = ?, created = ?, is_edited = ?'
                 ' WHERE id = ?',
-                (title, body, id)
+                (title, body, formatted_time, 1, id)
             )
             db.commit()
             return redirect(url_for('blog.view_post', id=id))
@@ -116,7 +119,7 @@ def delete(id):
 def get_comments(id):
     """Retrieve all comments made by a specific user."""
     query = (
-        'SELECT id, post_id, author_id, author_username, body, created, like_count, comment_count'
+        'SELECT id, post_id, author_id, author_username, body, created, is_edited, like_count, comment_count'
         ' FROM comment'
         ' WHERE post_id = ?'
     )
@@ -125,11 +128,14 @@ def get_comments(id):
 
 
 def add_comment(post, comment_body):
+    timezone = pytz.timezone('America/New_York')
+    current_time = datetime.now(timezone)
+    formatted_time = current_time.strftime('%m/%d/%Y @ %I:%M %p')
     db = get_db()
     db.execute(
-        'INSERT INTO comment (body, author_id, post_id, author_username)'
-        ' VALUES (?, ?, ?, ?)',
-        (comment_body, g.user['id'], post['id'], g.user['username'])
+        'INSERT INTO comment (body, author_id, post_id, author_username, created)'
+        ' VALUES (?, ?, ?, ?, ?)',
+        (comment_body, g.user['id'], post['id'], g.user['username'], formatted_time)
     )
     db.commit()
     db.execute(
@@ -142,7 +148,7 @@ def add_comment(post, comment_body):
 
 def get_comment(id, check_author=True):
     comment = get_db().execute(
-        'SELECT p.id, body, created, author_id, username, like_count, comment_count'
+        'SELECT p.id, is_edited, body, created, author_id, username, like_count, comment_count'
         ' FROM comment p JOIN user u ON p.author_id = u.id'
         ' WHERE p.id = ?',
         (id,)
@@ -171,11 +177,14 @@ def update_comment(post_id, id):
         if error is not None:
             flash(error)
         else:
+            timezone = pytz.timezone('America/New_York')
+            current_time = datetime.now(timezone)
+            formatted_time = current_time.strftime('%m/%d/%Y @ %I:%M %p')
             db = get_db()
             db.execute(
-                'UPDATE comment SET body = ?'
+                'UPDATE comment SET body = ?, created = ?, is_edited = ?'
                 ' WHERE id = ?',
-                (body, id)
+                (body, formatted_time, 1, id)
             )
             db.commit()
             return redirect(url_for('blog.view_post', id=post_id))
@@ -242,6 +251,16 @@ def like_post(id):
             (post['like_count']+1, id)
         )
         db.commit()
+        title = g.user['username'] + " has liked your post!"
+        content = "click to view the post"
+        timezone = pytz.timezone('America/New_York')
+        current_time = datetime.now(timezone)
+        formatted_time = current_time.strftime('%m/%d/%Y @ %I:%M %p')
+        db.execute(
+            'INSERT INTO notification (type, user_id, other_user_id, other_user_username, content, time, post_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            ('like', post['author_id'], g.user['id'], g.user['username'], content, formatted_time, post['id'])
+        )
+        db.commit()
         return f"<script>window.location = '{request.referrer}?scroll_position={scroll_position}'</script>"
     else:
         db = get_db()
@@ -249,10 +268,16 @@ def like_post(id):
             'DELETE FROM like WHERE user_id = ? AND post_id = ?',
             (g.user['id'], id)
         )
+        db.commit()
         db.execute(
             'UPDATE post SET like_count = ?'
             ' WHERE id = ?',
             (post['like_count']-1, id)
+        )
+        db.commit()
+        db.execute(
+            'DELETE FROM notification WHERE user_id = ? AND other_user_id = ? AND post_id = ?',
+            (id, g.user['id'], post['id'])
         )
         db.commit()
         return f"<script>window.location = '{request.referrer}?scroll_position={scroll_position}'</script>"

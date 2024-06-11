@@ -30,9 +30,16 @@ bp = Blueprint('notifications', __name__, url_prefix='/notifications')
 @bp.route('/notifications')
 def get_notifications():
     user_id = g.user['id']
+    db = get_db()
+    notifications = db.execute(
+        'SELECT * FROM notification n JOIN user u ON n.other_user_id = u.id'
+        ' WHERE n.user_id = ?'
+        ' ORDER BY n.timestamp DESC',
+        (user_id,)
+    ).fetchall()
     messages = get_messages(user_id)
     friend_requests = get_friend_requests(user_id)
-    return render_template('notifications/notifications.html', messages=messages, friend_requests=friend_requests)
+    return render_template('notifications/notifications.html', notifications=notifications, messages=messages, friend_requests=friend_requests, has_pfp=has_pfp)
 
 def get_messages(user_id):
     db = get_db()
@@ -83,3 +90,15 @@ def new_message():
         return redirect(url_for('notifications.notifications'))
     else:
         return render_template('notifications/new_message.html', messages=messages)
+    
+def has_pfp(id):
+    db = get_db()
+    print(id)
+    user = db.execute(
+        'SELECT profile_picture FROM user WHERE id = ?',
+        (id,)
+    ).fetchone()
+    if user and user['profile_picture'] is not None:
+        return True
+    else:
+        return False

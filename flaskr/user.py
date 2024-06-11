@@ -29,7 +29,7 @@ def profile():
 def get_user_posts(user_id):
     """Retrieve all posts made by a specific user."""
     query = (
-        'SELECT id, title, body, created, author_id, like_count, comment_count'
+        'SELECT id, title, is_edited, body, created, author_id, like_count, comment_count'
         ' FROM post'
         ' WHERE author_id = ?'
     )
@@ -149,6 +149,19 @@ def send_friend_request(friend_id):
         'INSERT INTO relationship (first_user_id, second_user_id, status)'
         ' VALUES (?, ?, ?)',
         (g.user['id'], friend_id, 1)
+    )
+    db.commit()
+    return f"<script>window.location = '{request.referrer}'</script>"
+
+@bp.route('/<int:friend_id>/cancel_friend_request', methods=('POST',))
+@login_required
+def cancel_friend_request(friend_id):
+    db = get_db()
+    db.execute(
+        'DELETE FROM relationship '
+        'WHERE (first_user_id = ? AND second_user_id = ?) '
+        'OR (first_user_id = ? AND second_user_id = ?)',
+        (g.user['id'], friend_id, friend_id, g.user['id'])
     )
     db.commit()
     return f"<script>window.location = '{request.referrer}'</script>"

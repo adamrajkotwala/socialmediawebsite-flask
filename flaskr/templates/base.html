@@ -2,10 +2,19 @@
 <title>{% block title %}{% endblock %} - Flaskr</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <nav>
-  <h1>Greenbook</h1>
+  <h1><a href="{{ url_for('blog.index') }}">Greenbook</a></h1>
+    <h1>
+      {% if g.user %}
+        <li id="search-li"><form id="search-form" method="GET" action="{{ url_for('user.search') }}">
+            <input type="text" name="query" id="search-query" placeholder="Search by username or name" required>
+            <button type="submit">Search</button>
+        </form>
+      {% endif %}
+    </h1>
+
   <ul>
     {% if g.user %}
-      <li><a href="{{ url_for('blog.index') }}">Home</a>
+      <li><a href="{{ url_for('blog.index') }}">Inbox</a>
       <li><a href="{{ url_for('notifications.get_notifications') }}">Notifications</a>
       <li><a href="{{ url_for('user.profile') }}">{{ g.user['username'] }}</a>
       <li><a href="{{ url_for('user.settings') }}">Settings</a>
@@ -15,12 +24,12 @@
       <li><a href="{{ url_for('auth.register') }}">Register</a>
       <li><a href="{{ url_for('auth.login') }}">Log In</a>
     {% endif %}
-    {% if g.user %}
+    <!-- {% if g.user %}
     <li id="search-li"><form id="search-form" method="GET" action="{{ url_for('user.search') }}">
         <input type="text" name="query" id="search-query" placeholder="Search by username or name" required>
         <button type="submit">Search</button>
     </form>
-    {% endif %}
+    {% endif %} -->
   </ul>
 </nav>
 <section class="content">

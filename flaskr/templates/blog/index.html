@@ -20,15 +20,26 @@
       </div>
       <header>
         <div>
-          <h1><a href="{{ url_for('blog.view_post', id=post['id']) }}">{{ post['title'] }}</a>
-          </h1>
-          <div class="about">by
-            {% if g.user['id'] != post['author_id'] %}
-              <a href="{{ url_for('user.profile_others', username=post['username']) }}">{{ post['username'] }}</a>
+          <h1><a href="{{ url_for('blog.view_post', id=post['id']) }}">{{ post['title'] }}</a></h1>
+          <br>
+          <div class="about">
+            {% if post['is_edited'] != 1 %} 
+              by
+              {% if g.user['id'] != post['author_id'] %}
+                <a href="{{ url_for('user.profile_others', username=post['username']) }}">{{ post['username'] }}</a>
+              {% else %}
+                <a href="{{ url_for('user.profile', username=post['username']) }}">{{ post['username'] }}</a>
+              {% endif %}
+                on {{ post['created'] }}
             {% else %}
-              <a href="{{ url_for('user.profile', username=post['username']) }}">{{ post['username'] }}</a>
+              edited by
+              {% if g.user['id'] != post['author_id'] %}
+                <a href="{{ url_for('user.profile_others', username=post['username']) }}">{{ post['username'] }}</a>
+              {% else %}
+                <a href="{{ url_for('user.profile', username=post['username']) }}">{{ post['username'] }}</a>
+              {% endif %}
+                on {{ post['created'] }}
             {% endif %}
-              on {{ post['created'] }}
           </div>
         </div>
         {% if g.user['id'] == post['author_id'] %}

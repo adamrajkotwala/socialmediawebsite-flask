@@ -1,18 +1,38 @@
 {% extends 'base.html' %}
 
 {% block header %}
-  <h1>{% block title %}{{ post['title'] }}{% endblock %}</h1>
-  <div class="about">Posted by
-    {% if g.user['id'] != post['author_id'] %}
-      <a href="{{ url_for('user.profile_others', username=post['username']) }}">{{ post['username'] }}</a>
-    {% else %}
-      <a href="{{ url_for('user.profile', username=post['username']) }}">{{ post['username'] }}</a>
-    {% endif %}
-    on {{ post['created'] }}
-  </div>
+  <h1> 
+    <div class = "small_pfp">
+      {% if g.user == post['author_id'] and g.user['profile_picture'] %}
+        <img src="{{ url_for('user.resize_small', id=g.user['id']) }}" alt="Profile Picture">
+      {% elif has_pfp(post['author_id']) %}
+        <img src="{{ url_for('user.resize_small', id=post['author_id']) }}" alt="Profile Picture">
+      {% endif %}
+    </div>
+  </h1>
+  {% if post['is_edited'] != 1 %}
+    <div class="about">Posted by
+      {% if g.user['id'] != post['author_id'] %}
+        <a href="{{ url_for('user.profile_others', username=post['username']) }}">{{ post['username'] }}</a>
+      {% else %}
+        <a href="{{ url_for('user.profile', username=post['username']) }}">{{ post['username'] }}</a>
+      {% endif %}
+        on {{ post['created'] }}
+    </div>
+  {% else %}
+    <div class="about">Edited by
+      {% if g.user['id'] != post['author_id'] %}
+        <a href="{{ url_for('user.profile_others', username=post['username']) }}">{{ post['username'] }}</a>
+      {% else %}
+        <a href="{{ url_for('user.profile', username=post['username']) }}">{{ post['username'] }}</a>
+      {% endif %}
+        on {{ post['created'] }}
+    </div>
+  {% endif %}
 {% endblock %}
 
 {% block content %}
+ <h1>{{ post['title'] }}</h1>
     {% if post['body'] %}
         <div>
             <p>{{ post['body'] }}</p>
@@ -47,7 +67,7 @@
         </div>
         <hr>
     <div>
-        <p>{{ 'Comments' }}<hr></p>
+        <p>{{ 'Comments:' }}<hr></p>
         {% for comment in comments %}
         <article class="post">
           <br>
@@ -60,15 +80,27 @@
           </div>
             <header>
               <div>
-                <h1>{{ comment['author_username'] }}</h1>
-                <div class="about">by
-                  {% if g.user['id'] != comment['author_id'] %}
-                    <a href="{{ url_for('user.profile_others', username=comment['author_username']) }}">{{ comment['author_username'] }}</a>
-                  {% else %}
-                    <a href="{{ url_for('user.profile', username=comment['author_username']) }}">{{ comment['author_username'] }}</a>
-                  {% endif %}
-                  on {{ post['created'] }}
-                </div>
+                <!-- <h1>{{ comment['author_username'] }}</h1> -->
+                <br>
+                {% if comment['is_edited'] != 1 %}
+                  <div class="about">by
+                    {% if g.user['id'] != comment['author_id'] %}
+                      <a href="{{ url_for('user.profile_others', username=comment['author_username']) }}">{{ comment['author_username'] }}</a>
+                    {% else %}
+                      <a href="{{ url_for('user.profile', username=comment['author_username']) }}">{{ comment['author_username'] }}</a>
+                    {% endif %}
+                      on {{ comment['created'] }}
+                  </div>
+                {% else %}
+                  <div class="about">edited by
+                    {% if g.user['id'] != comment['author_id'] %}
+                      <a href="{{ url_for('user.profile_others', username=comment['author_username']) }}">{{ comment['author_username'] }}</a>
+                    {% else %}
+                      <a href="{{ url_for('user.profile', username=comment['author_username']) }}">{{ comment['author_username'] }}</a>
+                    {% endif %}
+                      on {{ comment['created'] }}
+                  </div>
+                {% endif %}
               </div>
             </header>
             <p class="body">{{ comment['body'] }}</p>
