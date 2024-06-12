@@ -7,29 +7,31 @@
       {% if g.user %}
         <li id="search-li"><form id="search-form" method="GET" action="{{ url_for('user.search') }}">
             <input type="text" name="query" id="search-query" placeholder="Search by username or name" required>
-            <button type="submit">Search</button>
+              <div class="search-button"><button type="submit"><img src="{{ url_for('static', filename='search.png') }}" alt="Search" class="shrink-search"></button></div>
         </form>
       {% endif %}
     </h1>
-
   <ul>
     {% if g.user %}
-      <li><a href="{{ url_for('blog.index') }}">Inbox</a>
-      <li><a href="{{ url_for('notifications.get_notifications') }}">Notifications</a>
       <li><a href="{{ url_for('user.profile') }}">{{ g.user['username'] }}</a>
-      <li><a href="{{ url_for('user.settings') }}">Settings</a>
-      <li><a href="{{ url_for('auth.logout') }}">Log Out</a>
+      <li>
+        <a href="{{ url_for('notifications.get_notifications') }}" class="notification-bell">
+          <img src="{{ url_for('static', filename='notification-bell.svg') }}" alt="Notifications" class="custom-icon">
+          {% if get_unseen_notifications_count(g.user['id']) > 0 %}
+            <span class="badge">{{ get_unseen_notifications_count(g.user['id']) }}</span>
+          {% endif %}
+        </a>
+      </li>
+      <li>
+          <a href="{{ url_for('user.settings') }}" class="settings-icon">
+            <img src="{{ url_for('static', filename='settings.png') }}" alt="Settings" class="custom-icon">
+          </a>
+      </li>
     {% else %}
       <li><a href="{{ url_for('blog.index') }}">Home</a>
       <li><a href="{{ url_for('auth.register') }}">Register</a>
       <li><a href="{{ url_for('auth.login') }}">Log In</a>
     {% endif %}
-    <!-- {% if g.user %}
-    <li id="search-li"><form id="search-form" method="GET" action="{{ url_for('user.search') }}">
-        <input type="text" name="query" id="search-query" placeholder="Search by username or name" required>
-        <button type="submit">Search</button>
-    </form>
-    {% endif %} -->
   </ul>
 </nav>
 <section class="content">

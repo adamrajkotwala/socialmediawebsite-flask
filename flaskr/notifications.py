@@ -39,7 +39,13 @@ def get_notifications():
     ).fetchall()
     messages = get_messages(user_id)
     friend_requests = get_friend_requests(user_id)
-    return render_template('notifications/notifications.html', notifications=notifications, messages=messages, friend_requests=friend_requests, has_pfp=has_pfp)
+    db.execute(
+        'UPDATE notification SET is_seen = ?'
+        ' WHERE user_id = ?',
+        (1,user_id)
+    )
+    db.commit()
+    return render_template('notifications/notifications.html', notifications=notifications, messages=messages, friend_requests=friend_requests, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
 
 def get_messages(user_id):
     db = get_db()
@@ -93,7 +99,6 @@ def new_message():
     
 def has_pfp(id):
     db = get_db()
-    print(id)
     user = db.execute(
         'SELECT profile_picture FROM user WHERE id = ?',
         (id,)
@@ -102,3 +107,20 @@ def has_pfp(id):
         return True
     else:
         return False
+    
+def get_unseen_notifications_count(user_id):
+    db =  get_db()
+    unseen_notification_count = db.execute(
+        'SELECT COUNT(*) FROM notification WHERE user_id = ? AND is_seen = ?',
+        (user_id, 0)
+    ).fetchone()[0]
+    print(unseen_notification_count)
+    return unseen_notification_count
+
+@bp.context_processor
+def inject_notifications_count():
+    try:
+        unseen_notifications_count = get_unseen_notifications_count(g.user['id'])
+    except:
+        unseen_notifications_count = 0
+    return dict(unseen_notifications_count=unseen_notifications_count)

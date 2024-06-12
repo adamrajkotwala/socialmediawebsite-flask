@@ -21,6 +21,20 @@
               &nbsp;has liked your&nbsp;
               <a href="{{ url_for('blog.view_post', id=notification['post_id']) }}">post</a>
               !
+            {% elif notification['type'] == "comment" %}
+              &nbsp;&nbsp;
+              <a href="{{ url_for('user.profile_others', username=notification['other_user_username']) }}">{{ notification['username'] }}</a> 
+              &nbsp;has commented on your&nbsp;
+              <a href="{{ url_for('blog.view_post', id=notification['post_id']) }}">post</a>
+              !
+            {% elif notification['type'] == "friend_request_received" %}
+              &nbsp;&nbsp;
+              <a href="{{ url_for('user.profile_others', username=notification['other_user_username']) }}">{{ notification['username'] }}</a> 
+              &nbsp;has sent you a friend request!
+            {% elif notification['type'] == "friend_request_accepted" %}
+              &nbsp;&nbsp;
+              <a href="{{ url_for('user.profile_others', username=notification['other_user_username']) }}">{{ notification['username'] }}</a> 
+              &nbsp;has accepted your friend request!
             {% endif %}
           </div>
           <br>

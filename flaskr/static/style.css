@@ -6,7 +6,8 @@ hr { border: none; border-top: 1px solid lightgray; }
 nav { background: rgb(255, 255, 255); display: flex; align-items: center; padding: 0 0.5rem;  }
 nav h1 { flex: auto; margin: 0;}
 nav h1 a { text-decoration: none; padding: 0.25rem 0.5rem; }
-nav ul  { display: flex; list-style: none; margin: 0; padding: 0; }
+nav ul  { display: flex; list-style: none;  margin: 0; padding: 0; align-items: center; }
+nav ul li { white-space: nowrap;}
 nav ul li a, nav ul li span, header .action { display: block; padding: 0.5rem; }
 .content {color: rgb(255, 255, 255); padding: 0 1rem 1rem; }
 .content > header { border-bottom: 1px solid lightgray; display: flex; align-items: flex-end; }
@@ -18,7 +19,7 @@ nav ul li a, nav ul li span, header .action { display: block; padding: 0.5rem; }
 .post .about { color: rgb(255, 255, 255); font-style: italic; }
 .post .body { color: rgb(255, 255, 255); white-space: pre-line; }
 .post .stats { color: rgb(207, 206, 206); }
-.like_button { width: 100px; height: 25px; }
+.like_button { width: 50px; height: 25px; }
 .update_button { width: 100px; height: 25px; }
 .content:last-child { margin-bottom: 0; }
 .content form { margin: 1em 0; display: flex; flex-direction: column; }
@@ -66,8 +67,8 @@ input[type=submit] { align-self: start; min-width: 10em; }
 
 .centered-form {
   display: flex;
-  flex-direction: column; /* Stack elements vertically */
-  align-items: center; /* Center elements horizontally */
+  flex-direction: column;
+  align-items: center;
 }
 
 .centered-form input[type="submit"] {
@@ -77,15 +78,9 @@ input[type=submit] { align-self: start; min-width: 10em; }
   align-items: center;
 }
 
-.comment_button {
-  align-items: center;
-  background-color: #ffffff;
-}
-
 #search-li {
   display: inline-block;
-  margin-right: 155px;
-  margin-bottom: 6px;
+  margin-right: 425px;
 }
 
 #search-form {
@@ -99,6 +94,87 @@ input[type=submit] { align-self: start; min-width: 10em; }
 }
 
 #search-form button {
-  margin-left: 5px; /* Add some space between input and button */
+  margin-left: 3px;
 }
 
+.search-button button {
+  position: relative;
+  display: inline-block;
+  background-color: transparent;
+  border: none !important;
+  outline: none !important;
+  width: 24px;
+  height: 24px;
+}
+
+.shrink-search {
+  margin-top: 5px;
+  width: 34px;
+  height: 34px;
+}
+
+.notification-bell {
+  position: relative;
+  display: inline-block;
+}
+
+.notification-bell .custom-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.notification-bell .badge {
+  position: absolute;
+  top: -5px;
+  right: -10px;
+  padding: 5px 10px;
+  border-radius: 50%;
+  background: red;
+  color: white;
+  font-size: 0.8rem;
+}
+
+.settings-icon {
+  position: relative;
+  display: inline-block;
+}
+
+.settings-icon .custom-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.comment_button {
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  background-color: #ffffff;
+  margin-top: 5px;
+}
+
+.new_post {
+  margin-bottom: 2px;
+  width: 24px;
+  height: 24px;
+}
+
+.edit_button {
+  width: 24px;
+  height: 24px;
+}
+
+.like_button button {
+  border: none;
+  padding: 0;
+  background-color: transparent;
+}
+
+.like_button img {
+  width: 25px; /* Adjust size as needed */
+  height: 25px; /* Adjust size as needed */
+}
+
+.post_buttons {
+  display: flex; 
+  align-items: center;
+}

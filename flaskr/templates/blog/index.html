@@ -1,9 +1,11 @@
 {% extends 'base.html' %}
 
 {% block header %}
-  <h1>{% block title %}Posts{% endblock %}</h1>
+  <h1>{% block title %}Home{% endblock %}</h1>
   {% if g.user %}
-    <a class="action" href="{{ url_for('blog.create') }}">New</a>
+    <a href="{{ url_for('blog.create', id=g.user['id']) }}">
+      <img src="{{ url_for('static', filename='edit-text.png') }}" alt="New Post" class="new_post">
+    </a>
   {% endif %}
 {% endblock %}
 
@@ -43,7 +45,9 @@
           </div>
         </div>
         {% if g.user['id'] == post['author_id'] %}
-          <a class="action" href="{{ url_for('blog.update', id=post['id']) }}">Edit</a>
+          <a href="{{ url_for('blog.update', id=post['id']) }}">
+            <img src="{{ url_for('static', filename='edit-post.png') }}" alt="Edit Post" class="edit_button">
+          </a>
         {% endif %}
       </header>
       <p class="body">{{ post['body'] }}</p>
@@ -59,16 +63,20 @@
           {{ post['comment_count'] }} Comment</a> &nbsp;&nbsp;&nbsp;
         {% endif %} 
         <br>
-        {% if has_liked_post(g.user['id'], post['id']) %}
-            <form action="{{ url_for('blog.like_post', id=post['id']) }}" method='POST'>
-              <div class= "like_button"><button type="submit">Unlike</button></div>
-            </form>
-        {% else %}
-            <form action="{{ url_for('blog.like_post', id=post['id']) }}" method='POST'>
-              <div class= "like_button"><button type="submit">Like</button></div>
-            </form>
-        {% endif %}
-        <a href="{{ url_for('blog.view_post', id=post['id']) }}"> Add a Comment </a>
+        <div class="post_buttons">
+          {% if has_liked_post(g.user['id'], post['id']) %}
+              <form action="{{ url_for('blog.like_post', id=post['id']) }}" method='POST'>
+                  <div class="like_button"><button type="submit"><img src="{{ url_for('static', filename='cool-like-green.png') }}" alt="Unlike"></button></div>
+              </form>
+          {% else %}
+              <form action="{{ url_for('blog.like_post', id=post['id']) }}" method='POST'>
+                  <div class="like_button"><button type="submit"><img src="{{ url_for('static', filename='cool-like.png') }}" alt="Like"></button></div>
+              </form>
+          {% endif %}
+          <a href="{{ url_for('blog.view_post', id=post['id']) }}" class="comment_link">
+              <img src="{{ url_for('static', filename='comment.png') }}" alt="Comments" class="comment_button">
+          </a>
+      </div>
       </div>
     </article>
     {% if not loop.last %}

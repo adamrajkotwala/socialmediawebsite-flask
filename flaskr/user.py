@@ -12,6 +12,10 @@ from flaskr.db import get_db
 
 from PIL import Image, ImageDraw
 
+from datetime import datetime
+
+import pytz
+
 import io
 
 bp = Blueprint('user', __name__, url_prefix='/user')
@@ -24,7 +28,7 @@ def profile():
             'SELECT * FROM user WHERE username = ?', (g.user['username'],)
         ).fetchone()
     posts = get_user_posts(user_id=user['id'])
-    return render_template('user/profile.html', posts=posts, has_liked_post=has_liked_post)
+    return render_template('user/profile.html', posts=posts, has_liked_post=has_liked_post, get_unseen_notifications_count=get_unseen_notifications_count)
 
 def get_user_posts(user_id):
     """Retrieve all posts made by a specific user."""
@@ -59,7 +63,7 @@ def profile_others(username):
 
     relationship = get_relationship(friend_id=other_user['id'])
     
-    return render_template('user/profile_others.html', user=other_user, posts=posts, relationship=relationship, has_liked_post=has_liked_post)
+    return render_template('user/profile_others.html', user=other_user, posts=posts, relationship=relationship, has_liked_post=has_liked_post, get_unseen_notifications_count=get_unseen_notifications_count)
 
 @bp.route('/<int:id>/bio', methods=('GET', 'POST'))
 @login_required
@@ -76,7 +80,7 @@ def bio(id):
             )
             db.commit()
             return redirect(url_for('user.profile'))     
-    return render_template('user/bio.html', bio=bio)
+    return render_template('user/bio.html', bio=bio, get_unseen_notifications_count=get_unseen_notifications_count)
 
 @bp.route('/profile_picture/<int:id>')
 def profile_picture(id):
@@ -128,7 +132,7 @@ def get_mimetype(image_data):
 @bp.route('/settings', methods=('GET', 'POST'))
 @login_required
 def settings():
-    return render_template('user/settings.html')
+    return render_template('user/settings.html', get_unseen_notifications_count=get_unseen_notifications_count)
 
 @bp.route('/<int:id>/delete_pfp', methods=('POST',))
 @login_required
@@ -151,6 +155,15 @@ def send_friend_request(friend_id):
         (g.user['id'], friend_id, 1)
     )
     db.commit()
+    content = "has sent you a friend request!"
+    timezone = pytz.timezone('America/New_York')
+    current_time = datetime.now(timezone)
+    formatted_time = current_time.strftime('%m/%d/%Y @ %I:%M %p')
+    db.execute(
+        'INSERT INTO notification (type, user_id, other_user_id, other_user_username, content, time) VALUES (?, ?, ?, ?, ?, ?)',
+        ("friend_request_received", friend_id, g.user['id'], g.user['username'], content, formatted_time)
+    )
+    db.commit()
     return f"<script>window.location = '{request.referrer}'</script>"
 
 @bp.route('/<int:friend_id>/cancel_friend_request', methods=('POST',))
@@ -162,6 +175,11 @@ def cancel_friend_request(friend_id):
         'WHERE (first_user_id = ? AND second_user_id = ?) '
         'OR (first_user_id = ? AND second_user_id = ?)',
         (g.user['id'], friend_id, friend_id, g.user['id'])
+    )
+    db.commit()
+    db.execute(
+        'DELETE FROM notification WHERE type = ? AND user_id = ? AND other_user_id = ?',
+        ("friend_request_received", friend_id, g.user['id'])
     )
     db.commit()
     return f"<script>window.location = '{request.referrer}'</script>"
@@ -186,6 +204,15 @@ def accept_friend_request(friend_id):
         (friend['friend_count']+1, friend_id)
     )
     db.commit()
+    content = "has accepted your friend request!"
+    timezone = pytz.timezone('America/New_York')
+    current_time = datetime.now(timezone)
+    formatted_time = current_time.strftime('%m/%d/%Y @ %I:%M %p')
+    db.execute(
+        'INSERT INTO notification (type, user_id, other_user_id, other_user_username, content, time) VALUES (?, ?, ?, ?, ?, ?)',
+        ("friend_request_accepted", friend_id, g.user['id'], g.user['username'], content, formatted_time)
+    )
+    db.commit()
     return f"<script>window.location = '{request.referrer}'</script>"
 
 @bp.route('/<int:friend_id>/unfriend', methods=('POST',))
@@ -208,6 +235,11 @@ def unfriend(friend_id):
     db.execute(
         'UPDATE user SET friend_count = ? WHERE id = ?',
         (friend['friend_count']-1, friend_id)
+    )
+    db.commit()
+    db.execute(
+        'DELETE FROM notification WHERE type = ? AND user_id = ? AND other_user_id = ?',
+        ("friend_request_accepted", friend_id, g.user['id'])
     )
     db.commit()
     return f"<script>window.location = '{request.referrer}'</script>"
@@ -248,7 +280,7 @@ def view_friends(id):
         flash(error)
         return f"<script>window.location = '{request.referrer}'</script>"
     else:
-        return render_template('user/view_friends.html', friends=friends)
+        return render_template('user/view_friends.html', friends=friends, get_unseen_notifications_count=get_unseen_notifications_count)
     
 @bp.route('/search', methods=['GET'])
 @login_required
@@ -266,4 +298,32 @@ def search():
     else:
         results = []
 
-    return render_template('user/search.html', results=results)
+    return render_template('user/search.html', results=results, get_unseen_notifications_count=get_unseen_notifications_count)
+
+def get_notifications():
+    user_id = g.user['id']
+    db = get_db()
+    notifications = db.execute(
+        'SELECT * FROM notification n JOIN user u ON n.other_user_id = u.id'
+        ' WHERE n.user_id = ?'
+        ' ORDER BY n.timestamp DESC',
+        (user_id,)
+    ).fetchall()
+    return notifications
+
+def get_unseen_notifications_count(user_id):
+    db =  get_db()
+    unseen_notification_count = db.execute(
+        'SELECT COUNT(*) FROM notification WHERE user_id = ? AND is_seen = ?',
+        (user_id, 0)
+    ).fetchone()[0]
+    print(unseen_notification_count)
+    return unseen_notification_count
+
+@bp.context_processor
+def inject_notifications_count():
+    try:
+        unseen_notifications_count = get_unseen_notifications_count(g.user['id'])
+    except:
+        unseen_notifications_count = 0
+    return dict(unseen_notifications_count=unseen_notifications_count)

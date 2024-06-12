@@ -26,7 +26,7 @@ def index():
         ' FROM post p JOIN user u ON p.author_id = u.id'
         ' ORDER BY created_stamp DESC'
     ).fetchall()
-    return render_template('blog/index.html', posts=posts, has_liked_post=has_liked_post, has_pfp=has_pfp)
+    return render_template('blog/index.html', posts=posts, has_liked_post=has_liked_post, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
 
 @bp.route('/create', methods=('GET', 'POST'))
 @login_required
@@ -57,7 +57,7 @@ def create():
             db.commit()
             return redirect(url_for('blog.index'))
 
-    return render_template('blog/create.html')
+    return render_template('blog/create.html', get_unseen_notifications_count=get_unseen_notifications_count)
 
 def get_post(id, check_author=True):
     post = get_db().execute(
@@ -103,7 +103,7 @@ def update(id):
             db.commit()
             return redirect(url_for('blog.view_post', id=id))
 
-    return render_template('blog/update.html', post=post)
+    return render_template('blog/update.html', post=post, get_unseen_notifications_count=get_unseen_notifications_count)
 
 @bp.route('/<int:id>/delete', methods=('POST',))
 @login_required
@@ -142,6 +142,11 @@ def add_comment(post, comment_body):
         'UPDATE post SET comment_count = ?'
         ' WHERE id = ?',
         (post['comment_count']+1, post['id'])
+    )
+    db.commit()
+    db.execute(
+        'INSERT INTO notification (type, user_id, other_user_id, other_user_username, content, time, post_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        ('comment', post['author_id'], g.user['id'], g.user['username'], comment_body, formatted_time, post['id'])
     )
     db.commit()
     return
@@ -189,7 +194,7 @@ def update_comment(post_id, id):
             db.commit()
             return redirect(url_for('blog.view_post', id=post_id))
 
-    return render_template('blog/update_comment.html', post=post, comment=comment)
+    return render_template('blog/update_comment.html', post=post, comment=comment, get_unseen_notifications_count=get_unseen_notifications_count)
 
 @bp.route('/<int:post_id>/<int:id>/delete_comment', methods=('POST',))
 @login_required
@@ -207,11 +212,11 @@ def delete_comment(post_id, id):
         (post['comment_count']-1, post['id'])
     )
     db.commit()
-    posts = db.execute(
-        'SELECT p.id, title, body, created, author_id, username, like_count, comment_count'
-        ' FROM post p JOIN user u ON p.author_id = u.id'
-        ' ORDER BY created DESC'
-    ).fetchall()
+    db.execute(
+        'DELETE FROM notification WHERE type = ? AND user_id = ? AND other_user_id = ? AND post_id = ?',
+        ("comment", id, g.user['id'], post['id'])
+    )
+    db.commit()
     return redirect(url_for('blog.view_post', id=post_id))
 
 @bp.route('/<int:id>/view_post', methods=('GET', 'POST'))
@@ -230,7 +235,7 @@ def view_post(id):
             add_comment(post, comment_body)
         return f"<script>window.location = '{request.referrer}'</script>"
     else:
-        return render_template('blog/view_post.html', post=post, has_liked_post=has_liked_post, comments=comments, has_pfp=has_pfp)
+        return render_template('blog/view_post.html', post=post, has_liked_post=has_liked_post, comments=comments, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
 
 @bp.route('/<int:id>/like_post', methods=('POST',))
 @login_required
@@ -251,7 +256,6 @@ def like_post(id):
             (post['like_count']+1, id)
         )
         db.commit()
-        title = g.user['username'] + " has liked your post!"
         content = "click to view the post"
         timezone = pytz.timezone('America/New_York')
         current_time = datetime.now(timezone)
@@ -276,8 +280,8 @@ def like_post(id):
         )
         db.commit()
         db.execute(
-            'DELETE FROM notification WHERE user_id = ? AND other_user_id = ? AND post_id = ?',
-            (id, g.user['id'], post['id'])
+            'DELETE FROM notification WHERE type = ? AND user_id = ? AND other_user_id = ? AND post_id = ?',
+            ("like", id, g.user['id'], post['id'])
         )
         db.commit()
         return f"<script>window.location = '{request.referrer}?scroll_position={scroll_position}'</script>"
@@ -311,3 +315,31 @@ def has_pfp(id):
         return True
     else:
         return False
+    
+def get_notifications():
+    user_id = g.user['id']
+    db = get_db()
+    notifications = db.execute(
+        'SELECT * FROM notification n JOIN user u ON n.other_user_id = u.id'
+        ' WHERE n.user_id = ?'
+        ' ORDER BY n.timestamp DESC',
+        (user_id,)
+    ).fetchall()
+    return notifications
+
+def get_unseen_notifications_count(user_id):
+    db =  get_db()
+    unseen_notification_count = db.execute(
+        'SELECT COUNT(*) FROM notification WHERE user_id = ? AND is_seen = ?',
+        (user_id, 0)
+    ).fetchone()[0]
+    print(unseen_notification_count)
+    return unseen_notification_count
+
+@bp.context_processor
+def inject_notifications_count():
+    try:
+        unseen_notifications_count = get_unseen_notifications_count(g.user['id'])
+    except:
+        unseen_notifications_count = 0
+    return dict(unseen_notifications_count=unseen_notifications_count)

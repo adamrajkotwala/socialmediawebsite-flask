@@ -94,13 +94,13 @@ CREATE TABLE notification (
   user_id INTEGER NOT NULL,
   other_user_id INTEGER,
   other_user_username TEXT,
-  content TEXT NOT NULL,
+  content TEXT,
   time TEXT,
   timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
   post_id INTEGER,
   type TEXT NOT NULL,
+  is_seen INTEGER NOT NULL DEFAULT 0,
   FOREIGN KEY (user_id) REFERENCES user(id),
   FOREIGN KEY (other_user_id) REFERENCES user(id),
-  FOREIGN KEY (post_id) REFERENCES post(id),
-  UNIQUE (user_id, other_user_id, post_id)
+  FOREIGN KEY (post_id) REFERENCES post(id)
 );
