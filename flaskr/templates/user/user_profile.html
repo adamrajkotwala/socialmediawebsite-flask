@@ -3,7 +3,7 @@
 {% block header %}
   <h1>{% block title %}{{ g.user['username'] }}{% endblock %}</h1>
   <a class="action" href="{{ url_for('user.settings') }}" style="font-size: 17px;">Change Profile Picture</a>
-  <a class="action" href="{{ url_for('user.bio', id=g.user['id']) }}" style="font-size: 17px;">Edit Bio</a>
+  <a class="action" href="{{ url_for('user.edit_bio', id=g.user['id']) }}" style="font-size: 17px;">Edit Bio</a>
 {% endblock %}
 
 {% block content %}
@@ -12,9 +12,9 @@
     <img src="{{ url_for('user.profile_picture', id=g.user['id']) }}" alt="Profile Picture">
   {% endif %}
   {% if g.user['friend_count'] != 1 %} 
-  <h1><a class="action" href="{{ url_for('user.view_friends', id=g.user['id']) }}" style="font-size: 17px;">{{ g.user['friend_count'] }} Friends</a></h1>
+    <h1><a class="action" href="{{ url_for('user.view_friends', id=g.user['id']) }}" style="font-size: 17px;">{{ g.user['friend_count'] }} Friends</a></h1>
   {% else %}
-  <h1><a class="action" href="{{ url_for('user.view_friends', id=g.user['id']) }}" style="font-size: 17px;">{{ g.user['friend_count'] }} Friend</a></h1>
+    <h1><a class="action" href="{{ url_for('user.view_friends', id=g.user['id']) }}" style="font-size: 17px;">{{ g.user['friend_count'] }} Friend</a></h1>
   {% endif %}
   {% if g.user['bio'] %}
     <div>
@@ -34,7 +34,7 @@
             edited on {{ post['created'] }}
           {% endif %}
         </div>
-        <a href="{{ url_for('blog.update', id=post['id']) }}">
+        <a href="{{ url_for('blog.update_post', id=post['id']) }}">
           <img src="{{ url_for('static', filename='edit-post.png') }}" alt="Edit Post" class="edit_button">
         </a>
       </header>

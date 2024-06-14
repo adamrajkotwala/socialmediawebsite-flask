@@ -1,6 +1,4 @@
-import functools
-
-from flask import (Blueprint, flash, g, redirect, render_template, request, url_for, send_file, jsonify)
+from flask import (Blueprint, flash, g, redirect, render_template, request, url_for, send_file)
 
 from werkzeug.exceptions import abort
 
@@ -12,7 +10,7 @@ from flaskr.db import get_db
 
 from PIL import Image, ImageDraw
 
-from .blog import *
+from .functions import *
 
 from datetime import datetime
 
@@ -22,15 +20,15 @@ import io
 
 bp = Blueprint('user', __name__, url_prefix='/user')
 
-@bp.route('/profile', methods=('GET', 'POST'))
+@bp.route('/user_profile', methods=('GET', 'POST'))
 @login_required
-def profile():
+def user_profile():
     db = get_db()
     user = db.execute(
             'SELECT * FROM user WHERE username = ?', (g.user['username'],)
         ).fetchone()
-    posts = get_user_posts(user_id=user['id'])
-    return render_template('user/profile.html', posts=posts, has_liked_post=has_liked_post, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
+    user_posts = get_user_posts(user_id=user['id'])
+    return render_template('user/user_profile.html', posts=user_posts, has_liked_post=has_liked_post, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
 
 def get_user_posts(user_id):
     """Retrieve all posts made by a specific user."""
@@ -49,10 +47,9 @@ def get_user(id):
     ).fetchone()
     return user
 
-@bp.route('/<string:username>/profile_others', methods=('GET', 'POST'))
+@bp.route('/<string:username>/nonuser_profile', methods=('GET',))
 @login_required
-def profile_others(username):
-    # if request.method == 'POST':
+def nonuser_profile(username):
     db = get_db()
     other_user = db.execute(
             'SELECT * FROM user WHERE username = ?', (username,)
@@ -65,11 +62,11 @@ def profile_others(username):
 
     relationship = get_relationship(friend_id=other_user['id'])
     
-    return render_template('user/profile_others.html', user=other_user, posts=posts, relationship=relationship, has_pfp=has_pfp, has_liked_post=has_liked_post, get_unseen_notifications_count=get_unseen_notifications_count)
+    return render_template('user/nonuser_profile.html', user=other_user, posts=posts, relationship=relationship, has_pfp=has_pfp, has_liked_post=has_liked_post, get_unseen_notifications_count=get_unseen_notifications_count)
 
-@bp.route('/<int:id>/bio', methods=('GET', 'POST'))
+@bp.route('/<int:id>/edit_bio', methods=('GET', 'POST'))
 @login_required
-def bio(id):
+def edit_bio(id):
     if request.method == 'POST':
         user_bio = request.form['bio']
         user_id = id
@@ -82,9 +79,9 @@ def bio(id):
             )
             db.commit()
             return redirect(url_for('user.profile'))     
-    return render_template('user/bio.html', bio=bio, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
+    return render_template('user/edit_bio.html', edit_bio=edit_bio, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
 
-@bp.route('/profile_picture/<int:id>')
+@bp.route('/<int:id>/profile_picture')
 def profile_picture(id):
     db = get_db()
     row = db.execute("SELECT profile_picture FROM user WHERE id = ?", (id,)).fetchone()
@@ -94,8 +91,8 @@ def profile_picture(id):
         return send_file(io.BytesIO(profile_picture), mimetype=mimetype)
     return 'No profile picture found'
 
-@bp.route('/resize_small/<int:id>')
-def resize_small(id):
+@bp.route('/crop_circle_50px/<int:id>')
+def crop_circle_50px(id):
     db = get_db()
     row = db.execute("SELECT profile_picture FROM user WHERE id = ?", (id,)).fetchone()
     if row and row['profile_picture']:
@@ -103,45 +100,42 @@ def resize_small(id):
         img = Image.open(io.BytesIO(profile_picture))
         img = img.resize((50, 50))
 
-        # Create a mask in the shape of a circle
         mask = Image.new('L', (50, 50), 0)
         draw = ImageDraw.Draw(mask)
         draw.ellipse((0, 0, 50, 50), fill=255)
 
-        # Apply the mask to the image
         img.putalpha(mask)
 
         img_byte_array = io.BytesIO()
-        img.save(img_byte_array, format='PNG')  # Save as PNG to preserve transparency
+        img.save(img_byte_array, format='PNG') 
         img_byte_array.seek(0)
 
         mimetype = 'image/png'
         return send_file(img_byte_array, mimetype=mimetype)
     return 'No profile picture found', 404
 
-@bp.route('/crop_nav_pfp/<int:id>')
-def crop_nav_pfp(id):
+@bp.route('/crop_circle_30px/<int:id>')
+def crop_circle_30px(id):
     db = get_db()
     row = db.execute("SELECT profile_picture FROM user WHERE id = ?", (id,)).fetchone()
     if row and row['profile_picture']:
         profile_picture = row['profile_picture']
         img = Image.open(io.BytesIO(profile_picture))
         
-        # Resize the image to 30x30 pixels
         img = img.resize((30, 30))
 
-        # Create a mask in the shape of a circle
         mask = Image.new('L', (30, 30), 0)
         draw = ImageDraw.Draw(mask)
         draw.ellipse((0, 0, 30, 30), fill=255)
 
         img.putalpha(mask)
         img_byte_array = io.BytesIO()
-        img.save(img_byte_array, format='PNG')  # Save as PNG to preserve transparency
+        img.save(img_byte_array, format='PNG')
         img_byte_array.seek(0)
         mimetype = 'image/png'
         return send_file(img_byte_array, mimetype=mimetype)
-    return 'No profile picture found', 404
+    else:
+        return 'No profile picture found', 404
 
 def get_mimetype(image_data):
     if image_data.startswith(b'\x89PNG\r\n\x1a\n'):
@@ -181,9 +175,7 @@ def send_friend_request(friend_id):
         (g.user['id'], friend_id, 1)
     )
     db.commit()
-    timezone = pytz.timezone('America/New_York')
-    current_time = datetime.now(timezone)
-    formatted_time = current_time.strftime('%m/%d/%Y @ %I:%M %p')
+    formatted_time = get_formatted_time('America/New_York')
     db.execute(
         'INSERT INTO notification (type, user_id, other_user_id, other_user_username, time) VALUES (?, ?, ?, ?, ?)',
         ("friend_request_received", friend_id, g.user['id'], g.user['username'], formatted_time)
@@ -229,9 +221,7 @@ def accept_friend_request(friend_id):
         (friend['friend_count']+1, friend_id)
     )
     db.commit()
-    timezone = pytz.timezone('America/New_York')
-    current_time = datetime.now(timezone)
-    formatted_time = current_time.strftime('%m/%d/%Y @ %I:%M %p')
+    formatted_time = get_formatted_time('America/New_York')
     db.execute(
         'INSERT INTO notification (type, user_id, other_user_id, other_user_username, time) VALUES ( ?, ?, ?, ?, ?)',
         ("friend_request_accepted", friend_id, g.user['id'], g.user['username'], formatted_time)
@@ -249,7 +239,6 @@ def decline_friend_request(friend_id):
     )
     db.commit()
     return f"<script>window.location = '{request.referrer}'</script>"
-
 
 @bp.route('/<int:friend_id>/unfriend', methods=('POST',))
 @login_required
@@ -318,7 +307,7 @@ def view_friends(id):
     else:
         return render_template('user/view_friends.html', friends=friends, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
     
-@bp.route('/search', methods=['GET'])
+@bp.route('/search', methods=('GET',))
 @login_required
 def search():
     query = request.args.get('query', '')

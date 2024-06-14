@@ -3,20 +3,18 @@
 {% block header %}
   <h1>{{ user['username'] }}</h1>
   {% if relationship['status'] == 2 %}
-    {% if user['friend_count'] != 1 %} 
-      <a class="action" href="{{ url_for('user.view_friends', id=user['id']) }}">{{ user['friend_count'] }} Friends</a>
-    {% else %}
-      <a class="action" href="{{ url_for('user.view_friends', id=user['id']) }}">{{ user['friend_count'] }} Friend</a>
-    {% endif %}
-  {% endif %}
-  {% if relationship is none %}
+    <a class="action" href="{{ url_for('user.view_friends', id=user['id']) }}">Messages</a>
+    <form id="relationship" action="{{ url_for('user.unfriend', friend_id=user['id']) }}" method="POST">
+      <div class="like_button"><button type="submit"><img src="{{ url_for('static', filename='unfriend.png') }}" alt="Unfriend" style="margin-top: 8px; margin-left: 14px;"></button></div>
+    </form>
+  {% elif relationship is none %}
     <form action="{{ url_for('user.send_friend_request', friend_id=user['id']) }}" method="POST">
       <div class="like_button"><button type="submit"><img src="{{ url_for('static', filename='add_friend.svg') }}" alt="Add Friend" style="margin-top: 8px; margin-left: 14px;"></button></div>
     </form>
   {% elif relationship['status'] == 1 %}
     {% if relationship['first_user_id'] == user['id'] %}
       <form id="relationship" action="{{ url_for('user.accept_friend_request', friend_id=user['id']) }}" method="POST">
-        <div class="like_button"><button type="submit"><img src="{{ url_for('static', filename='check.png') }}" alt="Accept Request" style="margin-top: 8px; margin-left: 32px;"></button></div>
+        <div class="like_button"><button type="submit"><img src="{{ url_for('static', filename='check.png') }}" alt="Accept Request" style="margin-top: 8px; margin-left: 30px;"></button></div>
       </form>
       <form id="relationship" action="{{ url_for('user.decline_friend_request', friend_id=user['id']) }}" method="POST">
         <div class="like_button"><button type="submit"><img src="{{ url_for('static', filename='decline.png') }}" alt="Decline Request" style="margin-top: 8px; margin-left: 14px;"></button></div>
@@ -25,10 +23,6 @@
       <form id="relationship" action="{{ url_for('user.cancel_friend_request', friend_id=user['id']) }}" method="POST">
         <div class="like_button"><button type="submit"><img src="{{ url_for('static', filename='cancel.svg') }}" alt="Cancel Request" style="margin-top: 8px; margin-left: 14px;"></button></div>
     {% endif %}
-  {% elif relationship['status'] == 2 %}
-    <form id="relationship" action="{{ url_for('user.unfriend', friend_id=user['id']) }}" method="POST">
-      <div class="like_button"><button type="submit"><img src="{{ url_for('static', filename='unfriend.png') }}" alt="Unfriend" style="margin-top: 8px; margin-left: 14px;"></button></div>
-    </form>
   {% endif %}
 {% endblock %}
 
@@ -36,6 +30,11 @@
   {% if user['profile_picture'] %}
     <br>
     <img src="{{ url_for('user.profile_picture', id=user['id']) }}" alt="Profile Picture">
+  {% endif %}
+  {% if user['friend_count'] != 1 %} 
+    <h1><a class="action" href="{{ url_for('user.view_friends', id=user['id']) }}" style="font-size: 17px;">{{ user['friend_count'] }} Friends</a></h1>
+  {% else %}
+  z<h1><a class="action" href="{{ url_for('user.view_friends', id=user['id']) }}" style="font-size: 17px;">{{ user['friend_count'] }} Friend</a></h1>
   {% endif %}
   {% if user['bio'] %}
     <div>

@@ -2,7 +2,6 @@
 
 {% block header %}
   <h1>{% block title %}Notifications{% endblock %}</h1>
-  <a class="action" href="{{ url_for('notifications.new_message') }}"> New Message </a>
 {% endblock %}
 
 {% block content %}
@@ -13,27 +12,27 @@
         <div class = "notification">
           <div class = "small_pfp" style="font-size: 18px; margin-left: 15px;">
             {% if has_pfp(notification['other_user_id']) %}
-              <img src="{{ url_for('user.resize_small', id=notification['other_user_id']) }}" alt="Profile Picture">
+              <img src="{{ url_for('user.crop_circle_50px', id=notification['other_user_id']) }}" alt="Profile Picture">
             {% endif %}
             {% if notification['type'] == "like" %}
               &nbsp;&nbsp;
-              <a href="{{ url_for('user.profile_others', username=notification['other_user_username']) }}">{{ notification['username'] }}</a> 
+              <a href="{{ url_for('user.nonuser_profile', username=notification['other_user_username']) }}">{{ notification['username'] }}</a> 
               &nbsp;has liked your&nbsp;
               <a href="{{ url_for('blog.view_post', id=notification['post_id']) }}">post</a>
               !
             {% elif notification['type'] == "comment" %}
               &nbsp;&nbsp;
-              <a href="{{ url_for('user.profile_others', username=notification['other_user_username']) }}">{{ notification['username'] }}</a> 
+              <a href="{{ url_for('user.nonuser_profile', username=notification['other_user_username']) }}">{{ notification['username'] }}</a> 
               &nbsp;has commented on your&nbsp;
               <a href="{{ url_for('blog.view_post', id=notification['post_id']) }}">post</a>
               !
             {% elif notification['type'] == "friend_request_received" %}
               &nbsp;&nbsp;
-              <a href="{{ url_for('user.profile_others', username=notification['other_user_username']) }}">{{ notification['username'] }}</a> 
+              <a href="{{ url_for('user.nonuser_profile', username=notification['other_user_username']) }}">{{ notification['username'] }}</a> 
               &nbsp;has sent you a friend request!
             {% elif notification['type'] == "friend_request_accepted" %}
               &nbsp;&nbsp;
-              <a href="{{ url_for('user.profile_others', username=notification['other_user_username']) }}">{{ notification['username'] }}</a> 
+              <a href="{{ url_for('user.nonuser_profile', username=notification['other_user_username']) }}">{{ notification['username'] }}</a> 
               &nbsp;has accepted your friend request!
             {% endif %}
           </div>

@@ -6,17 +6,11 @@ import string
 
 import re
 
-import time
-
-from flask import (
-    Flask, Blueprint, flash, g, redirect, render_template, request, jsonify, session, url_for
-)
+from flask import Flask, Blueprint, flash, g, redirect, render_template, request, session, url_for
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from flaskr.db import get_db
-
-from werkzeug.exceptions import abort
 
 from datetime import datetime
 
@@ -85,8 +79,6 @@ def register():
             error = "Last name is required."
         elif not birthday_str:
             error = "Birthday is required"
-    
-
 
         if error is None:
             existing_user = db.execute(
@@ -104,7 +96,7 @@ def register():
 
     return render_template('auth/register.html')
 
-@bp.route('/verify', methods=['GET', 'POST'])
+@bp.route('/verify', methods=('GET', 'POST'))
 def verify():
     email = request.args.get('email')
     code = '123456'#request.args.get('code')
@@ -138,9 +130,6 @@ def verify():
             flash(error)
 
     return render_template('auth/verify.html')
-
-if __name__ == '__main__': 
-    app.run(debug=True)
 
 @bp.route('/login', methods=('GET', 'POST'))
 def login():

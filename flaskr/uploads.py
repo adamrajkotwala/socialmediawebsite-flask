@@ -1,10 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory, Blueprint, flash, g
-
-import os
-
-from werkzeug.exceptions import abort
-
-import sqlite3
+from flask import Flask, request, Blueprint, flash, g
 
 from flaskr.auth import login_required
 
@@ -17,8 +11,6 @@ import io
 app = Flask(__name__)
 
 bp = Blueprint('uploads', __name__)
-
-from flask import Flask
 
 @bp.route('/upload', methods=('POST',))
 @login_required

@@ -192,3 +192,39 @@ input[type=submit] {
   display: flex; 
   align-items: center;
 }
+
+.profile-picture-container {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.custom-file-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: #FFF;
+  font-size: 16px;
+}
+
+.custom-file-label img {
+  width: 24px; /* Adjust the size as needed */
+  height: 24px;
+  margin-right: 8px;
+}
+
+.custom-button {
+  background-color: #000000; /* Set background color */
+  border: none;
+  padding: 10px 20px; /* Add padding */
+  color: white; /* Text color */
+  font-size: 16px; /* Font size */
+  cursor: pointer; /* Cursor style */
+  margin: 10px; /* Add margin */
+}
+
+.custom-button img {
+  width: 24px; /* Adjust the size as needed */
+  height: 24px;
+}

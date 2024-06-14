@@ -9,9 +9,9 @@
         {% for user in results %}
             <br>
             <div class = "small_pfp">
-                <img src="{{ url_for('user.resize_small', id=user['id']) }}" alt="Profile Picture">
+                <img src="{{ url_for('user.crop_circle_50px', id=user['id']) }}" alt="Profile Picture">
                 &nbsp;&nbsp;
-                <h1><a href="{{ url_for('user.profile_others', username=user['username']) }}" style="font-size: 18px; margin-left: 15px;">{{ user['username'] }}</a></h1>
+                <h1><a href="{{ url_for('user.nonuser_profile', username=user['username']) }}" style="font-size: 18px; margin-left: 15px;">{{ user['username'] }}</a></h1>
             </div>
         {% endfor %}
     </ul>

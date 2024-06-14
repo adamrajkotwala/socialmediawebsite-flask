@@ -1,24 +1,10 @@
-import functools
-
-import random
-
-import string
-
-import re
-
-import time
-
-from flask import (
-    Flask, Blueprint, flash, g, redirect, render_template, request, jsonify, session, url_for
-)
+from flask import Flask, Blueprint, g, redirect, render_template, request, url_for
 
 from flaskr.db import get_db
 
-from datetime import datetime
-
 from flask import Flask
 
-from .blog import get_unseen_notifications_count, inject_notifications_count
+from .functions import get_unseen_notifications_count, has_pfp
 
 app = Flask(__name__) 
 
@@ -46,7 +32,6 @@ def get_notifications():
 
 def get_messages(user_id):
     db = get_db()
-    # Fetch messages from the notifications for the current user
     messages = db.execute(
         'SELECT m.id, sender_id, content, timestamp, is_read, username as sender_username'
         ' FROM message m JOIN user u ON m.sender_id = u.id'
@@ -70,6 +55,7 @@ def get_friend_requests(user_id):
 def new_message():
     user_id = g.user['id']
     messages = get_messages(user_id)
+
     if request.method == 'POST':
         recipient = request.form.get('recipient')
         content = request.form.get('content')
@@ -83,7 +69,6 @@ def new_message():
 
         message_id = db.execute('SELECT last_insert_rowid()').fetchone()[0]
 
-        # Insert the message into the recipient's inbox
         db.execute(
             'INSERT INTO inbox (user_id, message_id) VALUES (?, ?)',
             (recipient, message_id)
@@ -91,16 +76,7 @@ def new_message():
         db.commit()
 
         return redirect(url_for('notifications.notifications'))
+    
     else:
         return render_template('notifications/new_message.html', has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count, messages=messages)
     
-def has_pfp(id):
-    db = get_db()
-    user = db.execute(
-        'SELECT profile_picture FROM user WHERE id = ?',
-        (id,)
-    ).fetchone()
-    if user and user['profile_picture'] is not None:
-        return True
-    else:
-        return False
