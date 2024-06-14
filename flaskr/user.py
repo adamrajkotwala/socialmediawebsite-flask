@@ -12,6 +12,8 @@ from flaskr.db import get_db
 
 from PIL import Image, ImageDraw
 
+from .blog import *
+
 from datetime import datetime
 
 import pytz
@@ -28,7 +30,7 @@ def profile():
             'SELECT * FROM user WHERE username = ?', (g.user['username'],)
         ).fetchone()
     posts = get_user_posts(user_id=user['id'])
-    return render_template('user/profile.html', posts=posts, has_liked_post=has_liked_post, get_unseen_notifications_count=get_unseen_notifications_count)
+    return render_template('user/profile.html', posts=posts, has_liked_post=has_liked_post, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
 
 def get_user_posts(user_id):
     """Retrieve all posts made by a specific user."""
@@ -63,7 +65,7 @@ def profile_others(username):
 
     relationship = get_relationship(friend_id=other_user['id'])
     
-    return render_template('user/profile_others.html', user=other_user, posts=posts, relationship=relationship, has_liked_post=has_liked_post, get_unseen_notifications_count=get_unseen_notifications_count)
+    return render_template('user/profile_others.html', user=other_user, posts=posts, relationship=relationship, has_pfp=has_pfp, has_liked_post=has_liked_post, get_unseen_notifications_count=get_unseen_notifications_count)
 
 @bp.route('/<int:id>/bio', methods=('GET', 'POST'))
 @login_required
@@ -80,7 +82,7 @@ def bio(id):
             )
             db.commit()
             return redirect(url_for('user.profile'))     
-    return render_template('user/bio.html', bio=bio, get_unseen_notifications_count=get_unseen_notifications_count)
+    return render_template('user/bio.html', bio=bio, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
 
 @bp.route('/profile_picture/<int:id>')
 def profile_picture(id):
@@ -117,6 +119,30 @@ def resize_small(id):
         return send_file(img_byte_array, mimetype=mimetype)
     return 'No profile picture found', 404
 
+@bp.route('/crop_nav_pfp/<int:id>')
+def crop_nav_pfp(id):
+    db = get_db()
+    row = db.execute("SELECT profile_picture FROM user WHERE id = ?", (id,)).fetchone()
+    if row and row['profile_picture']:
+        profile_picture = row['profile_picture']
+        img = Image.open(io.BytesIO(profile_picture))
+        
+        # Resize the image to 30x30 pixels
+        img = img.resize((30, 30))
+
+        # Create a mask in the shape of a circle
+        mask = Image.new('L', (30, 30), 0)
+        draw = ImageDraw.Draw(mask)
+        draw.ellipse((0, 0, 30, 30), fill=255)
+
+        img.putalpha(mask)
+        img_byte_array = io.BytesIO()
+        img.save(img_byte_array, format='PNG')  # Save as PNG to preserve transparency
+        img_byte_array.seek(0)
+        mimetype = 'image/png'
+        return send_file(img_byte_array, mimetype=mimetype)
+    return 'No profile picture found', 404
+
 def get_mimetype(image_data):
     if image_data.startswith(b'\x89PNG\r\n\x1a\n'):
         return 'image/png'
@@ -132,7 +158,7 @@ def get_mimetype(image_data):
 @bp.route('/settings', methods=('GET', 'POST'))
 @login_required
 def settings():
-    return render_template('user/settings.html', get_unseen_notifications_count=get_unseen_notifications_count)
+    return render_template('user/settings.html', get_unseen_notifications_count=get_unseen_notifications_count, has_pfp=has_pfp)
 
 @bp.route('/<int:id>/delete_pfp', methods=('POST',))
 @login_required
@@ -155,13 +181,12 @@ def send_friend_request(friend_id):
         (g.user['id'], friend_id, 1)
     )
     db.commit()
-    content = "has sent you a friend request!"
     timezone = pytz.timezone('America/New_York')
     current_time = datetime.now(timezone)
     formatted_time = current_time.strftime('%m/%d/%Y @ %I:%M %p')
     db.execute(
-        'INSERT INTO notification (type, user_id, other_user_id, other_user_username, content, time) VALUES (?, ?, ?, ?, ?, ?)',
-        ("friend_request_received", friend_id, g.user['id'], g.user['username'], content, formatted_time)
+        'INSERT INTO notification (type, user_id, other_user_id, other_user_username, time) VALUES (?, ?, ?, ?, ?)',
+        ("friend_request_received", friend_id, g.user['id'], g.user['username'], formatted_time)
     )
     db.commit()
     return f"<script>window.location = '{request.referrer}'</script>"
@@ -204,16 +229,27 @@ def accept_friend_request(friend_id):
         (friend['friend_count']+1, friend_id)
     )
     db.commit()
-    content = "has accepted your friend request!"
     timezone = pytz.timezone('America/New_York')
     current_time = datetime.now(timezone)
     formatted_time = current_time.strftime('%m/%d/%Y @ %I:%M %p')
     db.execute(
-        'INSERT INTO notification (type, user_id, other_user_id, other_user_username, content, time) VALUES (?, ?, ?, ?, ?, ?)',
-        ("friend_request_accepted", friend_id, g.user['id'], g.user['username'], content, formatted_time)
+        'INSERT INTO notification (type, user_id, other_user_id, other_user_username, time) VALUES ( ?, ?, ?, ?, ?)',
+        ("friend_request_accepted", friend_id, g.user['id'], g.user['username'], formatted_time)
     )
     db.commit()
     return f"<script>window.location = '{request.referrer}'</script>"
+
+@bp.route('/<int:friend_id>/decline_friend_request', methods=('POST',))
+@login_required
+def decline_friend_request(friend_id):
+    db = get_db()
+    db.execute(
+        'DELETE FROM relationship WHERE first_user_id = ? AND second_user_id = ? AND status = 1',
+        (friend_id, g.user['id'])
+    )
+    db.commit()
+    return f"<script>window.location = '{request.referrer}'</script>"
+
 
 @bp.route('/<int:friend_id>/unfriend', methods=('POST',))
 @login_required
@@ -280,7 +316,7 @@ def view_friends(id):
         flash(error)
         return f"<script>window.location = '{request.referrer}'</script>"
     else:
-        return render_template('user/view_friends.html', friends=friends, get_unseen_notifications_count=get_unseen_notifications_count)
+        return render_template('user/view_friends.html', friends=friends, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
     
 @bp.route('/search', methods=['GET'])
 @login_required
@@ -298,32 +334,4 @@ def search():
     else:
         results = []
 
-    return render_template('user/search.html', results=results, get_unseen_notifications_count=get_unseen_notifications_count)
-
-def get_notifications():
-    user_id = g.user['id']
-    db = get_db()
-    notifications = db.execute(
-        'SELECT * FROM notification n JOIN user u ON n.other_user_id = u.id'
-        ' WHERE n.user_id = ?'
-        ' ORDER BY n.timestamp DESC',
-        (user_id,)
-    ).fetchall()
-    return notifications
-
-def get_unseen_notifications_count(user_id):
-    db =  get_db()
-    unseen_notification_count = db.execute(
-        'SELECT COUNT(*) FROM notification WHERE user_id = ? AND is_seen = ?',
-        (user_id, 0)
-    ).fetchone()[0]
-    print(unseen_notification_count)
-    return unseen_notification_count
-
-@bp.context_processor
-def inject_notifications_count():
-    try:
-        unseen_notifications_count = get_unseen_notifications_count(g.user['id'])
-    except:
-        unseen_notifications_count = 0
-    return dict(unseen_notifications_count=unseen_notifications_count)
+    return render_template('user/search.html', results=results, has_pfp=has_pfp,  get_unseen_notifications_count=get_unseen_notifications_count)

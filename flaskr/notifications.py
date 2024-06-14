@@ -11,17 +11,14 @@ import time
 from flask import (
     Flask, Blueprint, flash, g, redirect, render_template, request, jsonify, session, url_for
 )
-from werkzeug.security import check_password_hash, generate_password_hash
 
 from flaskr.db import get_db
-
-from werkzeug.exceptions import abort
 
 from datetime import datetime
 
 from flask import Flask
 
-from flask_mail import Mail, Message 
+from .blog import get_unseen_notifications_count, inject_notifications_count
 
 app = Flask(__name__) 
 
@@ -95,7 +92,7 @@ def new_message():
 
         return redirect(url_for('notifications.notifications'))
     else:
-        return render_template('notifications/new_message.html', messages=messages)
+        return render_template('notifications/new_message.html', has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count, messages=messages)
     
 def has_pfp(id):
     db = get_db()
@@ -107,20 +104,3 @@ def has_pfp(id):
         return True
     else:
         return False
-    
-def get_unseen_notifications_count(user_id):
-    db =  get_db()
-    unseen_notification_count = db.execute(
-        'SELECT COUNT(*) FROM notification WHERE user_id = ? AND is_seen = ?',
-        (user_id, 0)
-    ).fetchone()[0]
-    print(unseen_notification_count)
-    return unseen_notification_count
-
-@bp.context_processor
-def inject_notifications_count():
-    try:
-        unseen_notifications_count = get_unseen_notifications_count(g.user['id'])
-    except:
-        unseen_notifications_count = 0
-    return dict(unseen_notifications_count=unseen_notifications_count)

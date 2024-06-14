@@ -7,11 +7,11 @@
 
 {% block content %}
   {% for notification in notifications %}
-    {% if g.user != notification['other_user_id'] %}
+    {% if g.user['id'] != notification['other_user_id'] %}
       <article class="post">
         <br>
         <div class = "notification">
-          <div class = "small_pfp">
+          <div class = "small_pfp" style="font-size: 18px; margin-left: 15px;">
             {% if has_pfp(notification['other_user_id']) %}
               <img src="{{ url_for('user.resize_small', id=notification['other_user_id']) }}" alt="Profile Picture">
             {% endif %}

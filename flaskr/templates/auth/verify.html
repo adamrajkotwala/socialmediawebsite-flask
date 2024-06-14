@@ -5,9 +5,15 @@
 {% endblock %}
 
 {% block content %}
-  <form method="post">
+  <form id="myForm" method="post">
     <label for="input_code">Input the 6-digit code</label>
     <input name="input_code" id="input_code" required>
-    <input type="submit" value="Submit">
+    <input type="submit" value="Submit" style="display:none;">
   </form>
+  <img src="{{ url_for('static', filename='submit.png') }}" alt="Submit" id="submitImage" style="width: 30px; height: 30px; cursor: pointer;">
+  <script>
+    document.getElementById("submitImage").addEventListener("click", function() {
+      document.getElementById("myForm").submit();
+    });
+  </script>
 {% endblock %}

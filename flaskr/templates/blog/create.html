@@ -5,11 +5,16 @@
 {% endblock %}
 
 {% block content %}
-  <form method="post">
+  <form id="myForm" method="post">
     <label for="title">Title</label>
     <input name="title" id="title" value="{{ request.form['title'] }}" required>
     <label for="body">Body</label>
     <textarea name="body" id="body">{{ request.form['body'] }}</textarea>
-    <input type="submit" value="Post">
+    <img src="{{ url_for('static', filename='submit.png') }}" alt="Submit" id="submitImage" style="width: 30px; height: 30px;">
   </form>
+  <script>
+    document.getElementById("submitImage").addEventListener("click", function() {
+      document.getElementById("myForm").submit();
+    });
+  </script>
 {% endblock %}

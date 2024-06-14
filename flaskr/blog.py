@@ -57,7 +57,7 @@ def create():
             db.commit()
             return redirect(url_for('blog.index'))
 
-    return render_template('blog/create.html', get_unseen_notifications_count=get_unseen_notifications_count)
+    return render_template('blog/create.html', has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
 
 def get_post(id, check_author=True):
     post = get_db().execute(
@@ -103,7 +103,7 @@ def update(id):
             db.commit()
             return redirect(url_for('blog.view_post', id=id))
 
-    return render_template('blog/update.html', post=post, get_unseen_notifications_count=get_unseen_notifications_count)
+    return render_template('blog/update.html', post=post, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
 
 @bp.route('/<int:id>/delete', methods=('POST',))
 @login_required
@@ -145,8 +145,8 @@ def add_comment(post, comment_body):
     )
     db.commit()
     db.execute(
-        'INSERT INTO notification (type, user_id, other_user_id, other_user_username, content, time, post_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        ('comment', post['author_id'], g.user['id'], g.user['username'], comment_body, formatted_time, post['id'])
+        'INSERT INTO notification (type, user_id, other_user_id, other_user_username, time, post_id) VALUES (?, ?, ?, ?, ?, ?)',
+        ('comment', post['author_id'], g.user['id'], g.user['username'], formatted_time, post['id'])
     )
     db.commit()
     return
@@ -194,7 +194,7 @@ def update_comment(post_id, id):
             db.commit()
             return redirect(url_for('blog.view_post', id=post_id))
 
-    return render_template('blog/update_comment.html', post=post, comment=comment, get_unseen_notifications_count=get_unseen_notifications_count)
+    return render_template('blog/update_comment.html', post=post, comment=comment, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
 
 @bp.route('/<int:post_id>/<int:id>/delete_comment', methods=('POST',))
 @login_required
@@ -256,13 +256,12 @@ def like_post(id):
             (post['like_count']+1, id)
         )
         db.commit()
-        content = "click to view the post"
         timezone = pytz.timezone('America/New_York')
         current_time = datetime.now(timezone)
         formatted_time = current_time.strftime('%m/%d/%Y @ %I:%M %p')
         db.execute(
-            'INSERT INTO notification (type, user_id, other_user_id, other_user_username, content, time, post_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            ('like', post['author_id'], g.user['id'], g.user['username'], content, formatted_time, post['id'])
+            'INSERT INTO notification (type, user_id, other_user_id, other_user_username, time, post_id) VALUES (?, ?, ?, ?, ?, ?)',
+            ('like', post['author_id'], g.user['id'], g.user['username'], formatted_time, post['id'])
         )
         db.commit()
         return f"<script>window.location = '{request.referrer}?scroll_position={scroll_position}'</script>"
@@ -330,8 +329,8 @@ def get_notifications():
 def get_unseen_notifications_count(user_id):
     db =  get_db()
     unseen_notification_count = db.execute(
-        'SELECT COUNT(*) FROM notification WHERE user_id = ? AND is_seen = ?',
-        (user_id, 0)
+        'SELECT COUNT(*) FROM notification WHERE user_id = ? AND is_seen = 0 AND other_user_id != ?',
+        (user_id, user_id)
     ).fetchone()[0]
     print(unseen_notification_count)
     return unseen_notification_count

@@ -11,7 +11,7 @@
             <div class = "small_pfp">
                 <img src="{{ url_for('user.resize_small', id=user['id']) }}" alt="Profile Picture">
                 &nbsp;&nbsp;
-                <a href="{{ url_for('user.profile_others', username=user['username']) }}">{{ user['username'] }}</a>
+                <h1><a href="{{ url_for('user.profile_others', username=user['username']) }}" style="font-size: 18px; margin-left: 15px;">{{ user['username'] }}</a></h1>
             </div>
         {% endfor %}
     </ul>

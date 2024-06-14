@@ -1,13 +1,26 @@
-{% extends 'base.html' %}
-
-{% block header %}
-  <h1>{% block title %}We're sad to see you go!{% endblock %}</h1>
-{% endblock %}
-
-{% block content %}
-  <form method="post">
-    <label for="password">Password</label>
-    <input type="password" name="password" id="password" required>
-    <input type="submit" value="Confirm">
-  </form>
-{% endblock %}
+<!doctype html>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<nav>
+  <h1><a href="{{ url_for('blog.index') }}">greenbook</a></h1>
+</nav>
+<section class="content">
+  <header>
+    {% block header %}<h1>We're sad to see you go!</h1>{% endblock %}
+  </header>
+  {% for message in get_flashed_messages() %}
+    <div class="flash">{{ message }}</div>
+  {% endfor %}
+  {% block content %}
+    <form id="myForm" method="post">
+      <label for="password">Password</label>
+      <input type="password" name="password" id="password" required>
+      <input type="submit" value="Confirm">
+    </form>
+    <img src="{{ url_for('static', filename='submit.png') }}" alt="Submit" id="submitImage" style="width: 30px; height: 30px; cursor: pointer;">
+  {% endblock %}
+  <script>
+    document.getElementById("submitImage").addEventListener("click", function() {
+      document.getElementById("myForm").submit();
+    });
+  </script>
+</section>

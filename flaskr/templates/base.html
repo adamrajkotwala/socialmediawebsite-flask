@@ -2,21 +2,20 @@
 <title>{% block title %}{% endblock %} - Flaskr</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <nav>
-  <h1><a href="{{ url_for('blog.index') }}">Greenbook</a></h1>
-    <h1>
-      {% if g.user %}
-        <li id="search-li"><form id="search-form" method="GET" action="{{ url_for('user.search') }}">
-            <input type="text" name="query" id="search-query" placeholder="Search by username or name" required>
-              <div class="search-button"><button type="submit"><img src="{{ url_for('static', filename='search.png') }}" alt="Search" class="shrink-search"></button></div>
-        </form>
-      {% endif %}
-    </h1>
+  <h1><a href="{{ url_for('blog.index') }}">greenbook</a></h1>
   <ul>
     {% if g.user %}
-      <li><a href="{{ url_for('user.profile') }}">{{ g.user['username'] }}</a>
+      <li id="search-li">
+        <form id="search-form" method="GET" action="{{ url_for('user.search') }}">
+          <input type="text" name="query" id="search-query" placeholder="Search by username or name" required>
+            <div class="search-button"><button type="submit"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="hover-icon"><!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"/></svg></button></div>
+        </form>
+      {% if has_pfp(g.user['id']) %}<li><a href="{{ url_for('user.profile') }}"><img src="{{ url_for('user.crop_nav_pfp', id=g.user['id']) }}" alt="Nav Profile Picture"></a>
+      {% else %} <li><a href="{{ url_for('user.profile') }}">{{g.user['username']}}</a>
+      {% endif %}
       <li>
         <a href="{{ url_for('notifications.get_notifications') }}" class="notification-bell">
-          <img src="{{ url_for('static', filename='notification-bell.svg') }}" alt="Notifications" class="custom-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="hover-icon" ><!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M224 0c-17.7 0-32 14.3-32 32V51.2C119 66 64 130.6 64 208v25.4c0 45.4-15.5 89.5-43.8 124.9L5.3 377c-5.8 7.2-6.9 17.1-2.9 25.4S14.8 416 24 416H424c9.2 0 17.6-5.3 21.6-13.6s2.9-18.2-2.9-25.4l-14.9-18.6C399.5 322.9 384 278.8 384 233.4V208c0-77.4-55-142-128-156.8V32c0-17.7-14.3-32-32-32zm0 96c61.9 0 112 50.1 112 112v25.4c0 47.9 13.9 94.6 39.7 134.6H72.3C98.1 328 112 281.3 112 233.4V208c0-61.9 50.1-112 112-112zm64 352H224 160c0 17 6.7 33.3 18.7 45.3s28.3 18.7 45.3 18.7s33.3-6.7 45.3-18.7s18.7-28.3 18.7-45.3z"/></svg>
           {% if get_unseen_notifications_count(g.user['id']) > 0 %}
             <span class="badge">{{ get_unseen_notifications_count(g.user['id']) }}</span>
           {% endif %}
@@ -24,11 +23,10 @@
       </li>
       <li>
           <a href="{{ url_for('user.settings') }}" class="settings-icon">
-            <img src="{{ url_for('static', filename='settings.png') }}" alt="Settings" class="custom-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="hover-icon"><!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg>
           </a>
       </li>
     {% else %}
-      <li><a href="{{ url_for('blog.index') }}">Home</a>
       <li><a href="{{ url_for('auth.register') }}">Register</a>
       <li><a href="{{ url_for('auth.login') }}">Log In</a>
     {% endif %}

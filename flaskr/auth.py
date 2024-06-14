@@ -11,6 +11,7 @@ import time
 from flask import (
     Flask, Blueprint, flash, g, redirect, render_template, request, jsonify, session, url_for
 )
+
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from flaskr.db import get_db
@@ -22,6 +23,7 @@ from datetime import datetime
 from flask import Flask
 
 from flask_mail import Mail, Message 
+
 
 app = Flask(__name__) 
 
@@ -229,7 +231,7 @@ def change_password(id):
 
         flash(error)
 
-    return render_template('auth/change_password.html', get_unseen_notifications_count=get_unseen_notifications_count)
+    return render_template('auth/change_password.html')
 
 
 @bp.route('/delete', methods=('GET', 'POST'))
@@ -254,32 +256,4 @@ def delete_acc():
         
         flash(error)
                 
-    return render_template('auth/deleteacc.html', get_unseen_notifications_count=get_unseen_notifications_count)
-
-def get_notifications():
-    user_id = g.user['id']
-    db = get_db()
-    notifications = db.execute(
-        'SELECT * FROM notification n JOIN user u ON n.other_user_id = u.id'
-        ' WHERE n.user_id = ?'
-        ' ORDER BY n.timestamp DESC',
-        (user_id,)
-    ).fetchall()
-    return notifications
-
-def get_unseen_notifications_count(user_id):
-    db =  get_db()
-    unseen_notification_count = db.execute(
-        'SELECT COUNT(*) FROM notification WHERE user_id = ? AND is_seen = ?',
-        (user_id, 0)
-    ).fetchone()[0]
-    print(unseen_notification_count)
-    return unseen_notification_count
-
-@bp.context_processor
-def inject_notifications_count():
-    try:
-        unseen_notifications_count = get_unseen_notifications_count(g.user['id'])
-    except:
-        unseen_notifications_count = 0
-    return dict(unseen_notifications_count=unseen_notifications_count)
+    return render_template('auth/deleteacc.html')

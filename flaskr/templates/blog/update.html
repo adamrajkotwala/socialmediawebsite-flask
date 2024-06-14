@@ -5,10 +5,9 @@
 {% endblock %}
 
 {% block content %}
-  <form method="post">
+  <form id="myForm" method="post">
     <label for="title">Title</label>
-    <input name="title" id="title"
-      value="{{ request.form['title'] or post['title'] }}" required>
+    <input name="title" id="title" value="{{ request.form['title'] or post['title'] }}" required>
     <label for="body">Body</label>
     <textarea name="body" id="body">{{ request.form['body'] or post['body'] }}</textarea>
     <input type="submit" value="Save">
@@ -17,4 +16,10 @@
   <form action="{{ url_for('blog.delete', id=post['id']) }}" method="post">
     <input class="danger" type="submit" value="Delete" onclick="return confirm('Are you sure?');">
   </form>
+  <img src="{{ url_for('static', filename='submit.png') }}" alt="Submit" id="submitImage" style="width: 30px; height: 30px; cursor: pointer;">
+  <script>
+    document.getElementById("submitImage").addEventListener("click", function() {
+      document.getElementById("myForm").submit();
+    });
+  </script>
 {% endblock %}
