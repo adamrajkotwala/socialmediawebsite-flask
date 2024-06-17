@@ -40,13 +40,6 @@ def get_user_posts(user_id):
     posts = get_db().execute(query, (user_id,)).fetchall()
     return posts
 
-def get_user(id):
-    db = get_db()
-    user = db.execute(
-        'SELECT * FROM user WHERE id = ?', (id,)
-    ).fetchone()
-    return user
-
 @bp.route('/<string:username>/nonuser_profile', methods=('GET',))
 @login_required
 def nonuser_profile(username):
@@ -78,7 +71,7 @@ def edit_bio(id):
                 (user_bio, user_id),
             )
             db.commit()
-            return redirect(url_for('user.profile'))     
+            return redirect(url_for('user.user_profile'))     
     return render_template('user/edit_bio.html', edit_bio=edit_bio, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
 
 @bp.route('/<int:id>/profile_picture')

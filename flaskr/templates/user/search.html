@@ -6,12 +6,15 @@
 
 {% block content %}
     <ul>
-        {% for user in results %}
+        {%  for user in results | rejectattr('id', 'eq', g.user['id']) %}
             <br>
             <div class = "small_pfp">
-                <img src="{{ url_for('user.crop_circle_50px', id=user['id']) }}" alt="Profile Picture">
-                &nbsp;&nbsp;
-                <h1><a href="{{ url_for('user.nonuser_profile', username=user['username']) }}" style="font-size: 18px; margin-left: 15px;">{{ user['username'] }}</a></h1>
+                {% if has_pfp(user['id']) %}
+                    <br>
+                    <a href="{{ url_for('user.nonuser_profile', username=user['username']) }}"><img src="{{ url_for('user.crop_circle_50px', id=user['id']) }}" alt="Feed Profile Picture"></a>
+                {% endif %}
+                    &nbsp;&nbsp;
+                    <h1><a href="{{ url_for('user.nonuser_profile', username=user['username']) }}" style="font-size: 18px; margin-left: 15px;">{{ user['username'] }}</a></h1>
             </div>
         {% endfor %}
     </ul>

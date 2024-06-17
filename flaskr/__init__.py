@@ -54,6 +54,9 @@ def create_app(test_config=None):
     from . import notifications
     app.register_blueprint(notifications.bp)
 
+    from . import inbox
+    app.register_blueprint(inbox.bp)
+
     from . import functions
     app.register_blueprint(functions.bp)
 

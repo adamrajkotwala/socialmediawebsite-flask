@@ -16,6 +16,20 @@ app = Flask(__name__)
 
 bp = Blueprint('functions', __name__, url_prefix='/functions')
 
+def get_user(id):
+    db = get_db()
+    user = db.execute(
+        'SELECT * FROM user WHERE id = ?', (id,)
+    ).fetchone()
+    return user
+
+def get_user_by_username(username):
+    db = get_db()
+    user = db.execute(
+        'SELECT * FROM user WHERE username = ?', (username,)
+    ).fetchone()
+    return user
+
 def get_post(id, check_author=True):
     post = get_db().execute(
         'SELECT p.id, title, body, is_edited, created, created_stamp, author_id, username, like_count, comment_count'

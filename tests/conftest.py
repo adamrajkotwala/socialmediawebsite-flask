@@ -1,7 +1,10 @@
 import os
+import sys
 import tempfile
 
 import pytest
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from flaskr import create_app
 from flaskr.db import get_db, init_db
 
@@ -44,8 +47,16 @@ class AuthActions(object):
     def login(self, username='test', password='test'):
         return self._client.post(
             '/auth/login',
-            data={'username': username, 'password': password}
+            data={
+                'username': username,
+                'password': password
+            }
         )
 
     def logout(self):
         return self._client.get('/auth/logout')
+
+
+@pytest.fixture
+def auth(client):
+    return AuthActions(client)

@@ -58,27 +58,6 @@ CREATE TABLE like (
   UNIQUE (user_id, post_id)
 );
 
-CREATE TABLE inbox (
-  user_id INTEGER NOT NULL,
-  message_id INTEGER NOT NULL DEFAULT 0,
-  is_deleted INTEGER NOT NULL DEFAULT 0,
-  FOREIGN KEY (user_id) REFERENCES user(id),
-  FOREIGN KEY (message_id) REFERENCES message(id),
-  UNIQUE (user_id, message_id)
-);
-
-CREATE TABLE message (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  sender_id INTEGER NOT NULL,
-  recipient_id INTEGER NOT NULL,
-  content TEXT NOT NULL,
-  time TEXT,
-  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-  is_read INTEGER NOT NULL DEFAULT 0,
-  FOREIGN KEY (sender_id) REFERENCES user(id),
-  FOREIGN KEY (recipient_id) REFERENCES user(id)
-);
-
 CREATE TABLE relationship (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   first_user_id INTEGER NOT NULL,
@@ -103,4 +82,37 @@ CREATE TABLE notification (
   FOREIGN KEY (user_id) REFERENCES user(id),
   FOREIGN KEY (other_user_id) REFERENCES user(id),
   FOREIGN KEY (post_id) REFERENCES post(id)
+);
+
+CREATE TABLE message (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  sender_id INTEGER NOT NULL,
+  sender_username NOT NULL,
+  recipient_id INTEGER NOT NULL,
+  recipient_username TEXT NOT NULL,
+  content TEXT NOT NULL,
+  time TEXT,
+  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+  is_read INTEGER NOT NULL DEFAULT 0,
+  FOREIGN KEY (sender_id) REFERENCES user(id),
+  FOREIGN KEY (recipient_id) REFERENCES user(id)
+);
+
+CREATE TABLE conversation (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  message_count INTEGER NOT NULL DEFAULT 0,
+  last_message_id INTEGER,
+  last_sender_id INTEGER,
+  last_sender_username TEXT,
+  last_message_content TEXT,
+  last_message_time TEXT,
+  last_message_timestamp DATETIME,
+  is_last_message_read INT NOT NULL DEFAULT 0,
+  first_user_id INT NOT NULL,
+  first_user_username TEXT NOT NULL,
+  second_user_id INT NOT NULL,
+  second_user_username TEXT NOT NULL,
+  FOREIGN KEY (first_user_id) REFERENCES user(id),
+  FOREIGN KEY (second_user_id) REFERENCES user(id),
+  UNIQUE (first_user_id, second_user_id)
 );

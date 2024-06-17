@@ -19,22 +19,24 @@
       {% if g.user['profile_picture'] %}
         <img src="{{ url_for('user.profile_picture', id=g.user['id']) }}" alt="Profile Picture">
       {% endif %}
-      <form action="{{ url_for('uploads.upload') }}" method="POST" enctype="multipart/form-data">
-        <input type="hidden" name="type" value="profile_picture">
-        <label for="file" class="custom-file-label">
-          <img src="{{ url_for('static', filename='add-image.png') }}" alt="Upload" style="margin-left: 28px;">
-          <input type="file" id="file" name="file" class="custom-file-input" style="display: none;">
-        </label>
-        <button type="submit" class="custom-button">
-          <label style="color: white; font-size: 16px;">Click here to submit and view changes</label>
-        </button>
-      </form>
-      <form action="{{ url_for('user.delete_pfp', id=g.user['id']) }}" method='POST'>
-        <button type="submit" class="custom-button">
-          <br>
-          <br>
-          <img src="{{ url_for('static', filename='trash.svg') }}" alt="Delete" style="height: 24px">
-        </button>
-      </form>
+      <div class="pfp_options" style="align-items: center; justify-content: flex-start;">
+        <form action="{{ url_for('uploads.upload') }}" method="POST" enctype="multipart/form-data">
+          <input type="hidden" name="type" value="profile_picture">
+          <label for="file" class="custom-file-label">
+            <img src="{{ url_for('static', filename='add-image.png') }}" alt="Upload" style="margin-left: 28px; margin-top: 30px;">
+            <input type="file" id="file" name="file" class="custom-file-input" style="display: none;">
+          </label>
+          <button type="submit" class="custom-button" style="margin-top: 70px;">
+            <label style="color: white; font-size: 16px;">Click here to submit and view changes</label>
+          </button>
+        </form>
+        <form action="{{ url_for('user.delete_pfp', id=g.user['id']) }}" method='POST' style="display: flex; justify-content: flex-start; width: 30px;">
+          <button type="submit" class="custom-button">
+            <br>
+            <br>
+            <img src="{{ url_for('static', filename='trash.svg') }}" alt="Delete" style="height: 24px; justify-content: flex-start;">
+          </button>
+        </form>
+      </div>
     </div>
 {% endblock %}

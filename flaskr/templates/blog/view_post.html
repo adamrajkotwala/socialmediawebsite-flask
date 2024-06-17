@@ -6,10 +6,10 @@
       {% if g.user['id'] == post['author_id'] and has_pfp(g.user['id']) %}
           <br>
           <a href="{{ url_for('user.user_profile') }}"><img src="{{ url_for('user.crop_circle_50px', id=g.user['id']) }}" alt="Feed Profile Picture"></a>
-        {% elif has_pfp(post['author_id']) %}
+      {% elif has_pfp(post['author_id']) %}
           <br>
           <a href="{{ url_for('user.nonuser_profile', username=post['username']) }}"><img src="{{ url_for('user.crop_circle_50px', id=post['author_id']) }}" alt="Feed Profile Picture"></a>
-        {% endif %}
+      {% endif %}
     </div>
   </h1>
   {% if post['is_edited'] != 1 %}

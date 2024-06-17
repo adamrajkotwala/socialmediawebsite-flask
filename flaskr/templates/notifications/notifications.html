@@ -12,7 +12,7 @@
         <div class = "notification">
           <div class = "small_pfp" style="font-size: 18px; margin-left: 15px;">
             {% if has_pfp(notification['other_user_id']) %}
-              <img src="{{ url_for('user.crop_circle_50px', id=notification['other_user_id']) }}" alt="Profile Picture">
+              <a href="{{ url_for('user.nonuser_profile', username=notification['other_user_username']) }}"><img src="{{ url_for('user.crop_circle_50px', id=notification['other_user_id']) }}" alt="Profile Picture"></a> 
             {% endif %}
             {% if notification['type'] == "like" %}
               &nbsp;&nbsp;
