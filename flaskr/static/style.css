@@ -36,7 +36,6 @@ input[type=submit] {
 
 #submitImage {
   cursor: pointer; 
-  margin-left: 10px;
   margin-bottom: 14px;
 }
 
@@ -227,4 +226,60 @@ input[type=submit] {
 .custom-button img {
   width: 24px; /* Adjust the size as needed */
   height: 24px;
+}
+
+.conversations-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px; /* Adjust the gap between conversations as needed */
+  align-items: center;
+}
+
+.convo {
+  border: 1px solid #ddd; /* Optional: Add a border to each conversation */
+  padding: 10px; /* Optional: Add padding to each conversation */
+  width: 250px; /* Adjust the width as needed */
+}
+
+.convo img {
+  display: block;
+  margin: 0 auto;
+}
+
+.convo header {
+  text-align: center;
+}
+
+.conversation {
+  display: flex;
+  flex-direction: column;
+}
+
+.message {
+  display: flex;
+  margin-bottom: 10px;
+  max-width: 60%; /* Adjust the width of the message boxes as needed */
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.message.sent {
+  align-self: flex-end;
+  background-color: #DCF8C6; /* Color for sent messages */
+  color: #000000;
+}
+
+.message.received {
+  align-self: flex-start;
+  background-color: #FFFFFF; /* Color for received messages */
+  border: 1px solid #ccc; /* Optional border for received messages */
+  color: #000000;
+}
+
+.timestamp {
+  display: flex;
+  align-items: last baseline;
+  font-size: 0.8em;
+  color: #999;
+  margin-top: 5px;
 }

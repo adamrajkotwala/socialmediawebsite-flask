@@ -1,5 +1,35 @@
 {% extends 'base.html' %}
 
+{% set other_username = conversation['first_user_username'] if g.user['id'] != conversation['first_user_id'] else conversation['second_user_username'] %}
+
 {% block header %}
-  <h1>{% block title %}Convo{% endblock %}</h1>
+  <h1 style="display: flex; justify-content: center; align-items: center;">
+    {% block title %}
+      {% if has_pfp(other_user['id']) %}
+        <br>
+        <a href="{{ url_for('user.nonuser_profile', username=other_username) }}"><img src="{{ url_for('user.crop_circle_50px', id=other_user['id']) }}" alt="Feed Profile Picture"></a>
+        &nbsp;
+      {% endif %}
+      <a href="{{ url_for('user.nonuser_profile', username=other_username) }}">{{ other_username }}</a>
+    {% endblock %}
+  </h1>
+{% endblock %}
+
+{% block content %}
+  <br>
+  <div class="conversation">
+    {% for message in messages %}
+      <div class="message {% if message['sender_id'] == g.user['id'] %}sent{% else %}received{% endif %}">
+        <p>{{ message['content'] }}</p>
+        <span class="timestamp">{{ message['time'] }}</span>
+      </div>
+    {% endfor %}
+  </div>
+  <form id="myForm" method="post" style="display: flex; justify-content: center; align-items: center;">
+    <label for="message_content" style="display: flex; justify-content: center; width: 350px;">Enter message to {{ other_username }}</label>
+    <input name="message_content" id="message_content" required style="width: 400px">
+    <button type="submit" form="myForm" style="background: none; border: none; padding: 0;">
+      <img src="{{ url_for('static', filename='submit.png') }}" alt="Submit" id="submitImage" style="display: flex; justify-content: center; width: 30px; height: 30px; cursor: pointer;">
+    </button>
+  </form>
 {% endblock %}
