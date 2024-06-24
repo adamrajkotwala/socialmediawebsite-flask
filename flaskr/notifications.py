@@ -4,7 +4,7 @@ from flaskr.db import get_db
 
 from flask import Flask
 
-from .functions import get_unseen_notifications_count, has_pfp
+from .functions import get_unseen_notifications_count, has_pfp, get_unseen_messages_count
 
 app = Flask(__name__) 
 
@@ -28,7 +28,7 @@ def get_notifications():
         (1,user_id)
     )
     db.commit()
-    return render_template('notifications/notifications.html', notifications=notifications, messages=messages, friend_requests=friend_requests, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
+    return render_template('notifications/notifications.html', get_unseen_messages_count=get_unseen_messages_count, notifications=notifications, messages=messages, friend_requests=friend_requests, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
 
 def get_messages(user_id):
     db = get_db()
@@ -78,5 +78,5 @@ def new_message():
         return redirect(url_for('notifications.notifications'))
     
     else:
-        return render_template('notifications/new_message.html', has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count, messages=messages)
+        return render_template('notifications/new_message.html', has_pfp=has_pfp, get_unseen_messages_count=get_unseen_messages_count, get_unseen_notifications_count=get_unseen_notifications_count, messages=messages)
     

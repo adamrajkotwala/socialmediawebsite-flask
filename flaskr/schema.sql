@@ -3,9 +3,10 @@ DROP TABLE IF EXISTS post;
 DROP TABLE IF EXISTS comment;
 DROP TABLE IF EXISTS like;
 DROP TABLE IF EXISTS inbox;
-DROP TABLE IF EXISTS message;
 DROP TABLE IF EXISTS relationship;
 DROP TABLE IF EXISTS notification;
+DROP TABLE IF EXISTS message;
+DROP TABLE IF EXISTS conversation;
 
 CREATE TABLE user (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -86,16 +87,20 @@ CREATE TABLE notification (
 
 CREATE TABLE message (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  conversation_id INTEGER NOT NULL,
   sender_id INTEGER NOT NULL,
   sender_username NOT NULL,
+  sender_is_deleted NOT NULL DEFAULT 0,
   recipient_id INTEGER NOT NULL,
   recipient_username TEXT NOT NULL,
+  recipient_is_deleted NOT NULL DEFAULT 0,
   content TEXT NOT NULL,
   time TEXT,
   timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
   is_read INTEGER NOT NULL DEFAULT 0,
   FOREIGN KEY (sender_id) REFERENCES user(id),
   FOREIGN KEY (recipient_id) REFERENCES user(id)
+  FOREIGN KEY (conversation_id) REFERENCES conversation(id)
 );
 
 CREATE TABLE conversation (
@@ -104,14 +109,16 @@ CREATE TABLE conversation (
   last_message_id INTEGER,
   last_sender_id INTEGER,
   last_sender_username TEXT,
-  last_message_content TEXT,
+  last_message_preview TEXT,
   last_message_time TEXT,
   last_message_timestamp DATETIME,
   is_last_message_read INT NOT NULL DEFAULT 0,
   first_user_id INT NOT NULL,
   first_user_username TEXT NOT NULL,
+  first_user_is_deleted NOT NULL DEFAULT 0,
   second_user_id INT NOT NULL,
   second_user_username TEXT NOT NULL,
+  second_user_is_deleted NOT NULL DEFAULT 0,
   FOREIGN KEY (first_user_id) REFERENCES user(id),
   FOREIGN KEY (second_user_id) REFERENCES user(id),
   UNIQUE (first_user_id, second_user_id)

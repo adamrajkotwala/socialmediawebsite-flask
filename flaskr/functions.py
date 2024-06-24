@@ -66,7 +66,6 @@ def has_liked_post(user_id, post_id):
 
 def has_pfp(id):
     db = get_db()
-    print(id)
     user = db.execute(
         'SELECT profile_picture FROM user WHERE id = ?',
         (id,)
@@ -93,8 +92,15 @@ def get_unseen_notifications_count(user_id):
         'SELECT COUNT(*) FROM notification WHERE user_id = ? AND is_seen = 0 AND other_user_id != ?',
         (user_id, user_id)
     ).fetchone()[0]
-    print(unseen_notification_count)
     return unseen_notification_count
+
+def get_unseen_messages_count(user_id):
+    db =  get_db()
+    unseen_message_count = db.execute(
+        'SELECT COUNT(*) FROM message WHERE recipient_id = ? AND is_read = 0',
+        (user_id,)
+    ).fetchone()[0]
+    return unseen_message_count
 
 @bp.context_processor
 def inject_notifications_count():
@@ -103,6 +109,14 @@ def inject_notifications_count():
     except:
         unseen_notifications_count = 0
     return dict(unseen_notifications_count=unseen_notifications_count)
+
+@bp.context_processor
+def inject_messages_count():
+    try:
+        unseen_messages_count = get_unseen_messages_count(g.user['id'])
+    except:
+        unseen_messages_count = 0
+    return dict(unseen_messages_count=unseen_messages_count)
 
 def get_formatted_time(timezoneStr):
     timezone = pytz.timezone(timezoneStr)

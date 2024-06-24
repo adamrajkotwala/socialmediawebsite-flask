@@ -24,7 +24,7 @@ def index():
         ' FROM post p JOIN user u ON p.author_id = u.id'
         ' ORDER BY created_stamp DESC'
     ).fetchall()
-    return render_template('blog/index.html', posts=posts, has_liked_post=has_liked_post, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
+    return render_template('blog/index.html', posts=posts, has_liked_post=has_liked_post, has_pfp=has_pfp, get_unseen_messages_count=get_unseen_messages_count, get_unseen_notifications_count=get_unseen_notifications_count)
 
 @bp.route('/create_post', methods=('GET', 'POST'))
 @login_required
@@ -48,9 +48,12 @@ def create_post():
                 (title, body, g.user['id'], formatted_time)
             )
             db.commit()
-            return redirect(url_for('blog.index'))
+            post = db.execute(
+                'SELECT * FROM post WHERE id = (SELECT last_insert_rowid())'
+            ).fetchone()
+            return redirect(url_for('blog.view_post', id=post['id']))
 
-    return render_template('blog/create_post.html', has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
+    return render_template('blog/create_post.html', has_pfp=has_pfp, get_unseen_messages_count=get_unseen_messages_count, get_unseen_notifications_count=get_unseen_notifications_count)
 
 @bp.route('/<int:id>/update_post', methods=('GET', 'POST'))
 @login_required
@@ -78,7 +81,7 @@ def update_post(id):
             db.commit()
             return redirect(url_for('blog.view_post', id=id))
 
-    return render_template('blog/update_post.html', post=post, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
+    return render_template('blog/update_post.html', post=post, has_pfp=has_pfp, get_unseen_messages_count=get_unseen_messages_count, get_unseen_notifications_count=get_unseen_notifications_count)
 
 @bp.route('/<int:id>/delete', methods=('POST',))
 @login_required
@@ -117,7 +120,7 @@ def update_comment(post_id, id):
             db.commit()
             return redirect(url_for('blog.view_post', id=post_id))
 
-    return render_template('blog/update_comment.html', post=post, comment=comment, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
+    return render_template('blog/update_comment.html', post=post, get_unseen_messages_count=get_unseen_messages_count, comment=comment, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
 
 @bp.route('/<int:post_id>/<int:id>/delete_comment', methods=('POST',))
 @login_required
@@ -155,7 +158,7 @@ def view_post(id):
             add_comment(post, comment_body)
         return f"<script>window.location = '{request.referrer}'</script>"
     else:
-        return render_template('blog/view_post.html', post=post, has_liked_post=has_liked_post, comments=comments, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
+        return render_template('blog/view_post.html', post=post, has_liked_post=has_liked_post, comments=comments, has_pfp=has_pfp, get_unseen_messages_count=get_unseen_messages_count, get_unseen_notifications_count=get_unseen_notifications_count)
 
 @bp.route('/<int:id>/like_post', methods=('POST',))
 @login_required

@@ -28,7 +28,7 @@ def user_profile():
             'SELECT * FROM user WHERE username = ?', (g.user['username'],)
         ).fetchone()
     user_posts = get_user_posts(user_id=user['id'])
-    return render_template('user/user_profile.html', posts=user_posts, has_liked_post=has_liked_post, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
+    return render_template('user/user_profile.html', get_unseen_messages_count=get_unseen_messages_count, posts=user_posts, has_liked_post=has_liked_post, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
 
 def get_user_posts(user_id):
     """Retrieve all posts made by a specific user."""
@@ -55,7 +55,7 @@ def nonuser_profile(username):
 
     relationship = get_relationship(friend_id=other_user['id'])
     
-    return render_template('user/nonuser_profile.html', user=other_user, posts=posts, relationship=relationship, has_pfp=has_pfp, has_liked_post=has_liked_post, get_unseen_notifications_count=get_unseen_notifications_count)
+    return render_template('user/nonuser_profile.html', get_unseen_messages_count=get_unseen_messages_count, user=other_user, posts=posts, relationship=relationship, has_pfp=has_pfp, has_liked_post=has_liked_post, get_unseen_notifications_count=get_unseen_notifications_count)
 
 @bp.route('/<int:id>/edit_bio', methods=('GET', 'POST'))
 @login_required
@@ -72,7 +72,7 @@ def edit_bio(id):
             )
             db.commit()
             return redirect(url_for('user.user_profile'))     
-    return render_template('user/edit_bio.html', edit_bio=edit_bio, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
+    return render_template('user/edit_bio.html', get_unseen_messages_count=get_unseen_messages_count, edit_bio=edit_bio, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
 
 @bp.route('/<int:id>/profile_picture')
 def profile_picture(id):
@@ -145,7 +145,7 @@ def get_mimetype(image_data):
 @bp.route('/settings', methods=('GET', 'POST'))
 @login_required
 def settings():
-    return render_template('user/settings.html', get_unseen_notifications_count=get_unseen_notifications_count, has_pfp=has_pfp)
+    return render_template('user/settings.html', get_unseen_messages_count=get_unseen_messages_count, get_unseen_notifications_count=get_unseen_notifications_count, has_pfp=has_pfp)
 
 @bp.route('/<int:id>/delete_pfp', methods=('POST',))
 @login_required
@@ -298,7 +298,7 @@ def view_friends(id):
         flash(error)
         return f"<script>window.location = '{request.referrer}'</script>"
     else:
-        return render_template('user/view_friends.html', friends=friends, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
+        return render_template('user/view_friends.html', get_unseen_messages_count=get_unseen_messages_count, friends=friends, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
     
 @bp.route('/search', methods=('GET',))
 @login_required
@@ -316,4 +316,4 @@ def search():
     else:
         results = []
 
-    return render_template('user/search.html', results=results, has_pfp=has_pfp,  get_unseen_notifications_count=get_unseen_notifications_count)
+    return render_template('user/search.html', get_unseen_messages_count=get_unseen_messages_count, results=results, has_pfp=has_pfp,  get_unseen_notifications_count=get_unseen_notifications_count)

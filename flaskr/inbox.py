@@ -30,7 +30,11 @@ bp = Blueprint('inbox', __name__, url_prefix='/inbox')
 @login_required
 def inbox():
     conversations = get_conversations()
-    return render_template('inbox/inbox.html', start_conversation=start_conversation, conversations=conversations, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count, delete_conversation=delete_conversation)
+    for conversation in conversations:
+        if (conversation['first_user_is_deleted'] == 1 and conversation['second_user_is_deleted'] == 1) or conversation['message_count'] == 0:
+            delete_conversation(conversation['first_user_id'], conversation['second_user_id'])
+
+    return render_template('inbox/inbox.html', get_unseen_messages_count=get_unseen_messages_count, start_conversation=start_conversation, conversations=conversations, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count, delete_conversation=delete_conversation)
 
 @bp.route('/start_conversation', methods=('POST',))
 @login_required
@@ -44,6 +48,10 @@ def start_conversation():
         flash("User Not Found")
         return f"<script>window.location = '{request.referrer}'</script>"
     
+    if recipient_username == user_username:
+        flash("You Cannot Message Yourself")
+        return f"<script>window.location = '{request.referrer}'</script>"
+    
     recipient_id = recipient_user['id']
 
     # Check if a conversation already exists between the users
@@ -55,7 +63,7 @@ def start_conversation():
     # Otherwise, create a new conversation row
     db = get_db()
     db.execute(
-        "INSERT INTO conversation (first_user_id, first_user_username, second_user_id, second_user_username) VALUES (?, ?, ?, ?)",
+        "INSERT INTO conversation (first_user_id, first_user_username, second_user_id, second_user_username, message_count) VALUES (?, ?, ?, ?, 0)",
         (user_id, user_username, recipient_id, recipient_username),
     )
     db.commit()
@@ -75,16 +83,6 @@ def get_conversations():
     ).fetchall()
     return conversations
 
-def get_messages(user_id, other_user_id):
-    db = get_db()
-    messages = db.execute(
-        'SELECT * FROM message '
-        'WHERE sender_id = ? AND recipient_id = ? '
-        'OR sender_id = ? AND recipient_id = ?',
-        (user_id, other_user_id, other_user_id, user_id)
-    ).fetchall()
-    return messages
-
 @bp.route('<int:user_id>/<int:other_user_id>/conversation', methods=('GET', 'POST'))
 @login_required
 def conversation(user_id, other_user_id):
@@ -93,24 +91,53 @@ def conversation(user_id, other_user_id):
     other_user = get_user(other_user_id)
     if request.method == 'POST':
         message_content = request.form['message_content']
+        last_message_preview = message_content[:20]+"..." if len(message_content) > 20 else message_content
         formatted_time = get_formatted_time('America/New_York')
         db = get_db()
         cursor = db.execute(
-            "INSERT INTO message (sender_id, sender_username, recipient_id, recipient_username, content, time) VALUES (?, ?, ?, ?, ?, ?)",
-            (user_id, g.user['username'], other_user_id, other_user['username'], message_content, formatted_time),
+            "INSERT INTO message (sender_id, sender_username, recipient_id, recipient_username, content, time, conversation_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (user_id, g.user['username'], other_user_id, other_user['username'], message_content, formatted_time, conversation['id']),
         )
         db.commit()
         new_message_id = cursor.lastrowid
         db.execute(
-            'UPDATE conversation SET message_count = ?, last_message_id = ?, last_sender_id = ?, last_sender_username = ?, last_message_content = ?, last_message_time = ?'
-            ' WHERE id = ?',
-            (conversation['message_count'] + 1, new_message_id, user_id, g.user['username'], message_content, formatted_time, conversation['id'])
+            'UPDATE conversation SET message_count = ?, last_message_id = ?, last_sender_id = ?, last_sender_username = ?, last_message_preview = ?, last_message_time = ?, is_last_message_read = ? '
+            'WHERE id = ?',
+            (conversation['message_count'] + 1, new_message_id, user_id, g.user['username'], last_message_preview, formatted_time, 0, conversation['id'])
         )
         db.commit()
+
+        if conversation['first_user_is_deleted'] == 1 or conversation['second_user_is_deleted'] == 1:
+            db.execute(
+                'UPDATE conversation SET first_user_is_deleted = 0 AND second_user_is_deleted = 0 '
+                'WHERE id = ?',
+                (conversation['id'],)
+            )
+            db.commit()
+
         return f"<script>window.location = '{request.referrer}'</script>"
     else:
-        return render_template('inbox/conversation.html', delete_conversation=delete_conversation, messages=messages, get_unseen_notifications_count=get_unseen_notifications_count, has_pfp=has_pfp, conversation=conversation, user_id=user_id, other_user=other_user)
+        for message in messages:
+            if (message['sender_is_deleted'] == 1 and message['recipient_is_deleted'] == 1):
+                delete_message(message['id'])
 
+        if conversation['last_sender_id'] != g.user['id']:
+            db = get_db()
+            db.execute(
+                'UPDATE conversation SET is_last_message_read = 1'
+                ' WHERE id = ?',
+                (conversation['id'],)
+            )
+            db.commit()
+            db.execute(
+                'UPDATE message SET is_read = 1'
+                ' WHERE (sender_id = ? AND recipient_id = ?) ',
+                (other_user_id, g.user['id'])
+            )
+            db.commit()
+            
+        return render_template('inbox/conversation.html', get_unseen_messages_count=get_unseen_messages_count, delete_conversation=delete_conversation, messages=messages, get_unseen_notifications_count=get_unseen_notifications_count, has_pfp=has_pfp, conversation=conversation, user_id=user_id, other_user=other_user)
+    
 @bp.route('/<int:user_id>/<int:other_user_id>/get_conversation', methods=('GET',))
 def get_conversation(user_id, other_user_id):
     db = get_db()
@@ -123,22 +150,132 @@ def get_conversation(user_id, other_user_id):
     return conversation
 
 @bp.route('/<int:user_id>/<int:other_user_id>/delete_conversation', methods=('POST',))
-def delete_conversation(conversation):
+def delete_conversation(user_id, other_user_id):
     db = get_db()
-
-    if conversation['message_count'] > 1:
+    conversation = get_conversation(user_id, other_user_id)
+    
+    if conversation['message_count'] > 0:
         db.execute(
             'DELETE FROM message '
-            'WHERE sender_id = ? AND recipient_id = ? '
-            'OR sender_id = ? AND recipient_id = ?',
+            'WHERE (sender_id = ? AND recipient_id = ?) '
+            'OR (sender_id = ? AND recipient_id = ?)',
             (conversation['first_user_id'], conversation['second_user_id'], conversation['second_user_id'], conversation['first_user_id'])
         )
-    db.commit()
+        db.commit()
+    
     db.execute(
         'DELETE FROM conversation '
-        'WHERE first_user_id = ? AND second_user_id = ? '
-        'OR first_user_id = ? AND second_user_id = ?',
+        'WHERE (first_user_id = ? AND second_user_id = ?) '
+        'OR (first_user_id = ? AND second_user_id = ?)',
         (conversation['first_user_id'], conversation['second_user_id'], conversation['second_user_id'], conversation['first_user_id'])
     )
     db.commit()
+    
+    return f"<script>window.location = '{request.referrer}'</script>"
+
+@bp.route('/<int:user_id>/<int:other_user_id>/soft_delete_conversation', methods=('POST',))
+def soft_delete_conversation(user_id, other_user_id):
+    db = get_db()
+    conversation = get_conversation(user_id, other_user_id)
+    
+    if conversation['message_count'] > 0:
+        db.execute(
+            'UPDATE message SET sender_is_deleted = 1'
+            ' WHERE conversation_id = ? AND sender_id = ?',
+            (conversation['id'], user_id)
+        )
+        db.commit()
+        db.execute(
+            'UPDATE message SET recipient_is_deleted = 1'
+            ' WHERE conversation_id = ? AND recipient_id = ?',
+            (conversation['id'], user_id)
+        )
+        db.commit()
+    
+    if user_id == conversation['first_user_id']:
+        db.execute(
+            'UPDATE conversation SET first_user_is_deleted = 1 '
+            'WHERE id = ?',
+            (conversation['id'],)
+        )
+        db.commit()
+    else:
+        db.execute(
+            'UPDATE conversation SET second_user_is_deleted = 1 '
+            'WHERE id = ?',
+            (conversation['id'],)
+        )
+        db.commit()
+    
+    return f"<script>window.location = '{request.referrer}'</script>"
+
+def get_messages(user_id, other_user_id):
+    db = get_db()
+    messages = db.execute(
+        'SELECT * FROM message '
+        'WHERE sender_id = ? AND recipient_id = ? '
+        'OR sender_id = ? AND recipient_id = ?',
+        (user_id, other_user_id, other_user_id, user_id)
+    ).fetchall()
+    return messages
+
+def get_message(message_id):
+    db = get_db()
+    messages = db.execute(
+        'SELECT * FROM message '
+        'WHERE id = ?',
+        (message_id,)
+    ).fetchone()
+    return messages
+
+def delete_message(message_id):
+    db = get_db()
+    db.execute(
+            'DELETE FROM message '
+            'WHERE id = ?',
+            (message_id,)
+        )
+    db.commit()
+    return
+
+@bp.route('/<int:message_id>/soft_delete_message', methods=('POST',))
+def soft_delete_message(message_id):
+    db = get_db()
+    message = get_message(message_id)
+    
+    if g.user['id'] == message['sender_id']:
+        db.execute(
+            'UPDATE message SET sender_is_deleted = 1'
+            ' WHERE id = ?',
+            (message['id'],)
+        )
+        db.commit()
+    else:
+        db.execute(
+            'UPDATE message SET recipient_is_deleted = 1'
+            ' WHERE id = ?',
+            (message['id'],)
+        )
+        db.commit()
+    
+    if message['sender_is_deleted'] == 1 and message['recipient_is_deleted'] == 1:
+        conversation = get_conversation(message['sender_id'], message['recipient_id'])
+        if message['id'] == conversation['last_message_id']:
+            # to do
+            print("to do")
+
+        db.execute(
+            'DELETE FROM message '
+            'WHERE id = ?',
+            (message['id'],)
+        )
+        db.commit()
+
+        db.execute(
+            'UPDATE conversation SET message_count = ?'
+            ' WHERE id = ?',
+            (conversation['message_count'] - 1, conversation['id'])
+        )
+        db.commit()
+    
     return f"<script>window.location = '{request.referrer}'</script>"

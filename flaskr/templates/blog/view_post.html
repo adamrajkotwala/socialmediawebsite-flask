@@ -9,6 +9,8 @@
       {% elif has_pfp(post['author_id']) %}
           <br>
           <a href="{{ url_for('user.nonuser_profile', username=post['username']) }}"><img src="{{ url_for('user.crop_circle_50px', id=post['author_id']) }}" alt="Feed Profile Picture"></a>
+      {% else %}
+          <br>
       {% endif %}
     </div>
   </h1>

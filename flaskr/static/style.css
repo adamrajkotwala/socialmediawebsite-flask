@@ -133,10 +133,25 @@ input[type=submit] {
   font-size: 0.8rem;
 }
 
+.settings-icon {
+  position: relative;
+  display: inline-block;
+}
 
 .settings-icon .hover-icon {
   width: 20px;
   height: 20px;
+}
+
+.settings-icon .badge {
+  position: absolute;
+  top: -5px;
+  right: -10px;
+  padding: 5px 10px;
+  border-radius: 50%;
+  background: red;
+  color: white;
+  font-size: 0.8rem;
 }
 
 .comment-button {
