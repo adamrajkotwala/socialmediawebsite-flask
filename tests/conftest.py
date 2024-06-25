@@ -4,7 +4,6 @@ import tempfile
 
 import pytest
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from flaskr import create_app
 from flaskr.db import get_db, init_db
 

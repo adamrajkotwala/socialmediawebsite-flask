@@ -28,7 +28,6 @@
           <article class="convo">
             <br>
             <div class="small_pfp" style="display: flex; justify-content: center;">
-              
               {% if has_pfp(other_user_id) == 1 %}
                 <br>
                 <a href="{{ url_for('user.nonuser_profile', username=other_username) }}">
@@ -44,26 +43,28 @@
               </h1>
             </div>
             <header>
-              {% if conversation['last_sender_id'] == g.user['id'] %}
-                <p>You: <q>{{ conversation['last_message_preview'] }}</q> </p>
-                <p>{{ conversation['last_message_time'] }}</p>
-                {% if conversation['is_last_message_read'] == 1 %}
-                  <p style="color: rgba(127, 255, 7, 0.863);">Read</p>
+              {% if conversation['last_message_preview'] != "None" and conversation['time'] != None %}
+                {% if conversation['last_sender_id'] == g.user['id'] %}
+                  <p>You: <q>{{ conversation['last_message_preview'] }}</q> </p>
+                  <p>{{ conversation['last_message_time'] }}</p>
+                  {% if conversation['is_last_message_read'] == 1 %}
+                    <p style="color: rgba(127, 255, 7, 0.863);">Read</p>
+                  {% else %}
+                    <p style="color: rgba(211, 211, 235, 0.651);">Delivered</p>
+                  {% endif %}
                 {% else %}
-                  <p style="color: rgba(211, 211, 235, 0.651);">Delivered</p>
-                {% endif %}
-              {% else %}
-                <p>Them: <q>{{ conversation['last_message_preview'] }}</q> </p>
-                <p>{{ conversation['last_message_time'] }}</p>
-                {% if conversation['is_last_message_read'] != 1 %}
-                  <p style="color: rgb(68, 68, 252);">New!</p>
+                  <p>Them: <q>{{ conversation['last_message_preview'] }}</q> </p>
+                  <p>{{ conversation['last_message_time'] }}</p>
+                  {% if conversation['is_last_message_read'] != 1 %}
+                    <p style="color: rgb(68, 68, 252);">New!</p>
+                  {% endif %}
                 {% endif %}
               {% endif %}
+              <form action="{{ url_for('inbox.soft_delete_conversation', user_id=g.user['id'], other_user_id=other_user_id) }}" method="post">
+                <input type="hidden">
+                <button type="submit" style="background: none; border: none; padding: 0px;"><img src="{{ url_for('static', filename='trash.svg') }}" alt="Submit" id="submitImage" style="width: 20px; height: 20px; cursor: pointer;"></button>
+              </form>
             </header>
-            <form action="{{ url_for('inbox.soft_delete_conversation', user_id=g.user['id'], other_user_id=other_user_id) }}" method="post">
-              <input type="hidden">
-              <button type="submit" style="background: none; border: none; padding: 0px;"><img src="{{ url_for('static', filename='trash.svg') }}" alt="Submit" id="submitImage" style="width: 20px; height: 20px; cursor: pointer;"></button>
-            </form>
           </article>
         {% endif %}
       {% endif %}

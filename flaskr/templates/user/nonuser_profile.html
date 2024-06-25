@@ -14,6 +14,7 @@
     </form>
   {% elif relationship['status'] == 1 %}
     {% if relationship['first_user_id'] == user['id'] %}
+      <a class="action" href="{{ url_for('inbox.conversation', user_id=g.user['id'], other_user_id=user['id']) }}">Conversation</a>
       <form id="relationship" action="{{ url_for('user.accept_friend_request', friend_id=user['id']) }}" method="POST">
         <div class="like_button"><button type="submit"><img src="{{ url_for('static', filename='check.png') }}" alt="Accept Request" style="margin-top: 8px; margin-left: 30px;"></button></div>
       </form>

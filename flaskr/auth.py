@@ -56,10 +56,16 @@ def register():
 
         db = get_db()
 
+        email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+
         if not email:
             error = 'Email is required.'
+        elif not re.match(email_regex, email):
+            error = 'Invalid email format.'
         elif not username:
             error = 'Username is required.'
+        elif not username.islower():
+            error = 'Username must be all lowercase.'
         elif not password:
             error = 'Password is required.'
         elif len(password) < 8:
@@ -125,7 +131,8 @@ def verify():
                 (email, username, generate_password_hash(password), first_name, last_name, birthday),
             )
             db.commit()
-            return redirect(url_for('auth.login'))
+            login(username, password)
+            return redirect(url_for('blog.index'))
         else:
             error = 'Code Invalid'
             flash(error)
@@ -133,10 +140,13 @@ def verify():
     return render_template('auth/verify.html')
 
 @bp.route('/login', methods=('GET', 'POST'))
-def login():
+def login(username = None, password = None):
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+
+        if username == None and password == None:
+            username = request.form['username']
+            password = request.form['password']
+
         db = get_db()
         error = None
         user = db.execute(
