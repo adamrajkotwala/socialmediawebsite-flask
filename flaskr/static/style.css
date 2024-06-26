@@ -93,6 +93,13 @@ input[type=submit] {
   display: inline-block;
 }
 
+#search-query {
+  width: 300px; 
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+}
+
 #search-form {
   display: flex;
   align-items: center;
@@ -104,8 +111,8 @@ input[type=submit] {
   background-color: transparent;
   border: none !important;
   outline: none !important;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
 }
 
 .notification-bell .hover-icon {
@@ -267,7 +274,49 @@ input[type=submit] {
 
 .conversation {
   display: flex;
-  flex-direction: column;
+  max-height: 500px;
+  overflow-y: auto;
+  flex-direction: column-reverse; /* This will reverse the scroll direction */
+}
+
+.conversation::-webkit-scrollbar {
+    width: 12px;
+}
+
+.conversation::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.conversation::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+.conversation::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Scrollbar styles for Firefox */
+.conversation {
+    scrollbar-width: thin;
+    scrollbar-color: #000000 #f1f1f1;
+}
+
+/* Scrollbar track and thumb for Firefox */
+.conversation::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.conversation::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 10px;
+    border: 3px solid #f1f1f1;
+}
+
+.conversation::-webkit-scrollbar-thumb:hover {
+    background-color: #555;
 }
 
 .message {
@@ -280,6 +329,7 @@ input[type=submit] {
 
 .message.sent {
   align-self: flex-end;
+  margin-right: 10px;
   background-color: #DCF8C6; /* Color for sent messages */
   color: #000000;
 }

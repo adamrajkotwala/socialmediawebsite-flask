@@ -16,27 +16,30 @@
 {% endblock %}
 
 {% block content %}
-  <br>
-  <div class="conversation">
-    {% for message in messages %}
+<br>
+<div class="conversation">
+    {% for message in messages[::-1] | reverse %}
     {% set is_deleted = message['sender_is_deleted'] if g.user['id'] == message['sender_id'] else message['recipient_is_deleted'] %}
-      {% if is_deleted != 1 %}
-        <div class="message {% if message['sender_id'] == g.user['id'] %}sent{% else %}received{% endif %}">
-          <p>{{ message['content'] }}</p>
-          <span class="timestamp">{{ message['time'] }}</span>
-          <form action="{{ url_for('inbox.soft_delete_message', message_id = message['id']) }}" method="post">
-            <input type="hidden">
-            <button type="submit" style="background: none; border: none; padding: 0px;"><img src="{{ url_for('static', filename='trash-black.svg') }}" alt="Submit" id="submitImage" style="width: 20px; height: 20px; cursor: pointer;"></button>
-          </form>
-        </div>
-      {% endif %}
+        {% if is_deleted != 1 %}
+            <div class="message {% if message['sender_id'] == g.user['id'] %}sent{% else %}received{% endif %}">
+                <p>{{ message['content'] }}</p>
+                <span class="timestamp">{{ message['time'] }}</span>
+                <form action="{{ url_for('inbox.soft_delete_message', message_id=message['id']) }}" method="post">
+                    <input type="hidden">
+                    <button type="submit" style="background: none; border: none; padding: 0px;">
+                        <img src="{{ url_for('static', filename='trash-black.svg') }}" alt="Submit" id="submitImage" style="width: 20px; height: 20px; cursor: pointer;">
+                    </button>
+                </form>
+            </div>
+        {% endif %}
     {% endfor %}
-  </div>
-  <form id="myForm" method="post" style="display: flex; justify-content: center; align-items: center;">
+</div>
+<form id="myForm" method="post" style="display: flex; justify-content: center; align-items: center;">
     <label for="message_content" style="display: flex; justify-content: center; width: 350px;">Enter message to {{ other_username }}</label>
     <input name="message_content" id="message_content" required style="width: 400px">
     <button type="submit" form="myForm" style="background: none; border: none; padding: 0;">
-      <img src="{{ url_for('static', filename='submit.png') }}" alt="Submit" id="submitImage" style="display: flex; justify-content: center; width: 30px; height: 30px; cursor: pointer;">
+        <img src="{{ url_for('static', filename='submit.png') }}" alt="Submit" id="submitImage" style="display: flex; justify-content: center; width: 30px; height: 30px; cursor: pointer;">
     </button>
-  </form>
+</form>
 {% endblock %}
+

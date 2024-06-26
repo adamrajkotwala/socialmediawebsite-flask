@@ -31,7 +31,7 @@ bp = Blueprint('inbox', __name__, url_prefix='/inbox')
 def inbox():
     conversations = get_conversations()
     for conversation in conversations:
-        set_last_message(conversation)
+        set_last_message(conversation, g.user['id'])
         if (conversation['first_user_is_deleted'] == 1 and conversation['second_user_is_deleted'] == 1) or conversation['message_count'] == 0:
             delete_conversation(conversation['first_user_id'], conversation['second_user_id'])
 
@@ -115,9 +115,16 @@ def conversation(user_id, other_user_id):
         db.commit()
         new_message_id = cursor.lastrowid
         db.execute(
-            'UPDATE conversation SET message_count = ?, last_message_id = ?, last_sender_id = ?, last_sender_username = ?, last_message_preview = ?, last_message_time = ?, is_last_message_read = ? '
+            'UPDATE conversation SET message_count = ?, '
+            'first_last_message_id = ?, first_last_sender_id = ?, first_last_sender_username = ?, first_last_message_preview = ?, first_last_message_time = ?, is_first_last_message_read = ?, '
+            'second_last_message_id = ?, second_last_sender_id = ?, second_last_sender_username = ?, second_last_message_preview = ?, second_last_message_time = ?, is_second_last_message_read = ? '
             'WHERE id = ?',
-            (conversation['message_count'] + 1, new_message_id, user_id, g.user['username'], last_message_preview, formatted_time, 0, conversation['id'])
+            (
+                conversation['message_count'] + 1,
+                new_message_id, user_id, g.user['username'], last_message_preview, formatted_time, 0,
+                new_message_id, user_id, g.user['username'], last_message_preview, formatted_time, 0,
+                conversation['id']
+            )
         )
         db.commit()
 
@@ -137,11 +144,23 @@ def conversation(user_id, other_user_id):
             if (message['sender_is_deleted'] == 1 and message['recipient_is_deleted'] == 1):
                 delete_message(message['id'])
 
-        if conversation['last_sender_id'] != g.user['id']:
+        if conversation['first_last_sender_id'] != g.user['id'] and g.user['id'] == conversation['first_user_id']:
             db = get_db()
             db.execute(
-                'UPDATE conversation SET is_last_message_read = 1'
-                ' WHERE id = ?',
+                'UPDATE conversation SET is_first_last_message_read = 1 WHERE id = ?',
+                (conversation['id'],)
+            )
+            db.commit()
+            db.execute(
+                'UPDATE message SET is_read = 1'
+                ' WHERE (sender_id = ? AND recipient_id = ?) ',
+                (other_user_id, g.user['id'])
+            )
+            db.commit()
+        elif conversation['second_last_sender_id'] != g.user['id'] and g.user['id'] == conversation['second_user_id']:
+            db = get_db()
+            db.execute(
+                'UPDATE conversation SET is_second_last_message_read = 1 WHERE id = ?',
                 (conversation['id'],)
             )
             db.commit()
@@ -229,7 +248,8 @@ def get_messages(user_id, other_user_id):
     messages = db.execute(
         'SELECT * FROM message '
         'WHERE sender_id = ? AND recipient_id = ? '
-        'OR sender_id = ? AND recipient_id = ?',
+        'OR sender_id = ? AND recipient_id = ? ' 
+        'ORDER BY timestamp DESC',
         (user_id, other_user_id, other_user_id, user_id)
     ).fetchall()
     return messages
@@ -243,51 +263,98 @@ def get_message(message_id):
     ).fetchone()
     return messages
 
-def set_last_message(conversation):
+def set_last_message(conversation, user_id):
     db = get_db()
+
+    # Determine which user is updating their last message
+    is_first_user = user_id == conversation['first_user_id']
     last_message = db.execute(
         'SELECT * FROM message '
-        'WHERE conversation_id = ? AND ((sender_id = ? AND sender_is_deleted = 0) OR (recipient_id = ? AND recipient_is_deleted = 0)) '
+        'WHERE conversation_id = ? AND sender_is_deleted = 0 AND recipient_is_deleted = 0 AND (sender_id = ? OR recipient_id = ?) '
         'ORDER BY timestamp DESC '
         'LIMIT 1',
-        (conversation['id'], g.user['id'], g.user['id'])
+        (conversation['id'], user_id, user_id)
     ).fetchone()
+
+    # Update last message details for the appropriate user
     if last_message is not None:
-        last_message_preview = last_message['content'][:20]+"..." if len(last_message['content']) > 20 else last_message['content']   
-        db.execute(
-            'UPDATE conversation SET '
-            'last_message_id = ?, '
-            'last_sender_id = ?, '
-            'last_sender_username = ?, '
-            'last_message_preview = ?, '
-            'last_message_time = ?, '
-            'last_message_timestamp = ? '
-            'WHERE id = ?',
-            (
-                last_message['id'],
-                last_message['sender_id'],
-                last_message['sender_username'],
-                last_message_preview,
-                last_message['time'],
-                last_message['timestamp'],
-                conversation['id']
+        last_message_preview = last_message['content'][:20] + "..." if len(last_message['content']) > 20 else last_message['content']
+        if is_first_user:
+            db.execute(
+                'UPDATE conversation SET '
+                'first_last_message_id = ?, '
+                'first_last_sender_id = ?, '
+                'first_last_sender_username = ?, '
+                'first_last_message_preview = ?, '
+                'first_last_message_time = ?, '
+                'first_last_message_timestamp = ?, '
+                'is_first_last_message_read = 1 '
+                'WHERE id = ?',
+                (
+                    last_message['id'],
+                    last_message['sender_id'],
+                    last_message['sender_username'],
+                    last_message_preview,
+                    last_message['time'],
+                    last_message['timestamp'],
+                    conversation['id']
+                )
             )
-        )
-        db.commit()
+        else:
+            db.execute(
+                'UPDATE conversation SET '
+                'second_last_message_id = ?, '
+                'second_last_sender_id = ?, '
+                'second_last_sender_username = ?, '
+                'second_last_message_preview = ?, '
+                'second_last_message_time = ?, '
+                'second_last_message_timestamp = ?, '
+                'is_second_last_message_read = 1 '
+                'WHERE id = ?',
+                (
+                    last_message['id'],
+                    last_message['sender_id'],
+                    last_message['sender_username'],
+                    last_message_preview,
+                    last_message['time'],
+                    last_message['timestamp'],
+                    conversation['id']
+                )
+            )
     else:
-        db.execute(
-            'UPDATE conversation SET '
-            'last_message_preview = ?, '
-            'last_message_time = ?, '
-            'is_last_message_read = 1 '
-            'WHERE id = ?',
-            (
-                "None",
-                None,
-                conversation['id']
+        if is_first_user:
+            db.execute(
+                'UPDATE conversation SET '
+                'first_last_message_id = NULL, '
+                'first_last_sender_id = NULL, '
+                'first_last_sender_username = NULL, '
+                'first_last_message_preview = ?, '
+                'first_last_message_time = NULL, '
+                'first_last_message_timestamp = NULL, '
+                'is_first_last_message_read = 1 '
+                'WHERE id = ?',
+                (
+                    "None",
+                    conversation['id']
+                )
             )
-        )
-        db.commit()
+        else:
+            db.execute(
+                'UPDATE conversation SET '
+                'second_last_message_id = NULL, '
+                'second_last_sender_id = NULL, '
+                'second_last_sender_username = NULL, '
+                'second_last_message_preview = ?, '
+                'second_last_message_time = NULL, '
+                'second_last_message_timestamp = NULL, '
+                'is_second_last_message_read = 1 '
+                'WHERE id = ?',
+                (
+                    "None",
+                    conversation['id']
+                )
+            )
+    db.commit()
     return
 
 def delete_message(message_id):
@@ -345,6 +412,6 @@ def soft_delete_message(message_id):
         )
         db.commit()
     
-    set_last_message(conversation)
+    set_last_message(conversation, g.user['id'])
     
     return f"<script>window.location = '{request.referrer}'</script>"
