@@ -233,7 +233,6 @@ def change_password(id):
 
     return render_template('auth/change_password.html')
 
-
 @bp.route('/delete', methods=('GET', 'POST'))
 @login_required
 def delete_acc():
@@ -241,15 +240,50 @@ def delete_acc():
         password = request.form['password']
         db = get_db()
         error = None
+
         user = db.execute(
             'SELECT * FROM user WHERE username = ?', (g.user['username'],)
         ).fetchone()
+
         if not check_password_hash(user['password'], password):
             error = 'Incorrect password.'
+
+        liked_posts = db.execute(
+            'SELECT post_id FROM like WHERE user_id = ?', (g.user['id'],)
+        ).fetchall()
+
+        for post in liked_posts:
+            db.execute(
+                'UPDATE post SET like_count = like_count - 1 WHERE id = ?', (post['post_id'],)
+            )
+
+        user_comments = db.execute(
+            'SELECT post_id FROM comment WHERE author_id = ?', (g.user['id'],)
+        ).fetchall()
+
+        for comment in user_comments:
+            db.execute(
+                'UPDATE post SET comment_count = comment_count - 1 WHERE id = ?', (comment['post_id'],)
+            )
+            
         if error is None:
             db.execute('DELETE FROM user WHERE username = ?', (g.user['username'],))
             db.commit()
+            db.execute('DELETE FROM post WHERE author_id = ?', (g.user['id'],))
+            db.commit()
             db.execute('DELETE FROM like WHERE user_id = ?', (g.user['id'],))
+            db.commit()
+            db.execute('DELETE FROM comment WHERE author_id = ?', (g.user['id'],))
+            db.commit()
+            db.execute('DELETE FROM message WHERE (sender_id = ?) OR (recipient_id = ?)', (g.user['id'], g.user['id']))
+            db.commit()
+            db.execute('DELETE FROM conversation WHERE (first_user_id = ?) OR (second_user_id = ?)', (g.user['id'], g.user['id']))
+            db.commit()
+            db.execute('DELETE FROM playlist WHERE user_id = ?', (g.user['id'],))
+            db.commit()
+            db.execute('DELETE FROM notification WHERE user_id = ?', (g.user['id'],))
+            db.commit()
+            db.execute('DELETE FROM relationship WHERE (first_user_id = ?) OR (second_user_id = ?)', (g.user['id'], g.user['id']))
             db.commit()
             session.clear()
             return redirect(url_for('index'))

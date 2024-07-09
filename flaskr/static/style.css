@@ -348,3 +348,16 @@ input[type=submit] {
   color: #999;
   margin-top: 5px;
 }
+
+.horizontal-list {
+  display: flex;
+  list-style-type: none; /* Removes default list bullets */
+  padding: 0;
+  flex-wrap: wrap;
+}
+
+.horizontal-list li {
+  margin: 10px; /* Adds spacing between items */
+  flex: 0 0 200px; /* Sets a fixed width for each item, adjust as needed */
+  box-sizing: border-box;
+}

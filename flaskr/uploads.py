@@ -13,7 +13,6 @@ app = Flask(__name__)
 bp = Blueprint('uploads', __name__)
 
 @bp.route('/upload', methods=('POST',))
-@login_required
 def upload():
 
     type = request.form.get('type')

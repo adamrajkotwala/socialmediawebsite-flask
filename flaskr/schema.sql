@@ -7,6 +7,8 @@ DROP TABLE IF EXISTS relationship;
 DROP TABLE IF EXISTS notification;
 DROP TABLE IF EXISTS message;
 DROP TABLE IF EXISTS conversation;
+DROP TABLE IF EXISTS playlist;
+DROP TABLE IF EXISTS playlists;
 
 CREATE TABLE user (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -18,7 +20,11 @@ CREATE TABLE user (
   birthday DATE,
   bio TEXT,
   profile_picture BLOB,
-  friend_count INTEGER NOT NULL DEFAULT 0
+  friend_count INTEGER NOT NULL DEFAULT 0,
+  is_spotify_connected NOT NULL DEFAULT 0,
+  spotify_access_token TEXT,
+  spotify_refresh_token TEXT,
+  spotify_expires_at INTEGER
 );
 
 CREATE TABLE post (
@@ -129,4 +135,18 @@ CREATE TABLE conversation (
   FOREIGN KEY (first_user_id) REFERENCES user(id),
   FOREIGN KEY (second_user_id) REFERENCES user(id),
   UNIQUE (first_user_id, second_user_id)
+);
+
+CREATE TABLE playlist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    spotify_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    external_url TEXT NOT NULL,
+    image BLOB,
+    total_tracks INTEGER NOT NULL,
+    owner TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES user (id)
 );

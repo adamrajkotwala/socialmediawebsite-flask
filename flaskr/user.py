@@ -1,4 +1,4 @@
-from flask import (Blueprint, flash, g, redirect, render_template, request, url_for, send_file)
+from flask import Blueprint, flash, g, redirect, render_template, request, url_for, send_file
 
 from werkzeug.exceptions import abort
 
@@ -12,23 +12,17 @@ from PIL import Image, ImageDraw
 
 from .functions import *
 
-from datetime import datetime
-
-import pytz
-
 import io
 
 bp = Blueprint('user', __name__, url_prefix='/user')
 
-@bp.route('/user_profile', methods=('GET', 'POST'))
+@bp.route('/user_profile', methods=('GET',))
 @login_required
 def user_profile():
-    db = get_db()
-    user = db.execute(
-            'SELECT * FROM user WHERE username = ?', (g.user['username'],)
-        ).fetchone()
-    user_posts = get_user_posts(user_id=user['id'])
-    return render_template('user/user_profile.html', get_unseen_messages_count=get_unseen_messages_count, posts=user_posts, has_liked_post=has_liked_post, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
+    user = get_user_by_username(g.user['username'])
+    user_posts = get_user_posts(user['id'])
+    user_playlists = get_user_playlists(user['id'])
+    return render_template('user/user_profile.html', playlists=user_playlists, get_unseen_messages_count=get_unseen_messages_count, posts=user_posts, has_liked_post=has_liked_post, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
 
 def get_user_posts(user_id):
     """Retrieve all posts made by a specific user."""
@@ -43,27 +37,28 @@ def get_user_posts(user_id):
 @bp.route('/<string:username>/nonuser_profile', methods=('GET',))
 @login_required
 def nonuser_profile(username):
-    db = get_db()
-    other_user = db.execute(
-            'SELECT * FROM user WHERE username = ?', (username,)
-        ).fetchone()
+    other_user = get_user_by_username(username)
     
     if other_user is None:
         abort(404)
 
     posts = get_user_posts(user_id=other_user['id'])
 
+    user_playlists = get_user_playlists(other_user['id'])
+
     relationship = get_relationship(friend_id=other_user['id'])
     
-    return render_template('user/nonuser_profile.html', get_unseen_messages_count=get_unseen_messages_count, user=other_user, posts=posts, relationship=relationship, has_pfp=has_pfp, has_liked_post=has_liked_post, get_unseen_notifications_count=get_unseen_notifications_count)
+    return render_template('user/nonuser_profile.html', playlists=user_playlists, get_unseen_messages_count=get_unseen_messages_count, user=other_user, posts=posts, relationship=relationship, has_pfp=has_pfp, has_liked_post=has_liked_post, get_unseen_notifications_count=get_unseen_notifications_count)
 
 @bp.route('/<int:id>/edit_bio', methods=('GET', 'POST'))
-@login_required
 def edit_bio(id):
     if request.method == 'POST':
         user_bio = request.form['bio']
         user_id = id
         error = None
+        if len(user_bio) > 300:
+            error = "Bio cannot exceed 300 characters"
+            flash(error)
         if error == None:
             db = get_db()
             db.execute(
@@ -83,6 +78,16 @@ def profile_picture(id):
         mimetype = get_mimetype(profile_picture)
         return send_file(io.BytesIO(profile_picture), mimetype=mimetype)
     return 'No profile picture found'
+
+@bp.route('/<int:id>/playlist_picture')
+def playlist_picture(id):
+    db = get_db()
+    row = db.execute("SELECT image FROM playlist WHERE id = ?", (id,)).fetchone()
+    if row and row['image']:
+        image = row['image']
+        mimetype = get_mimetype(image)
+        return send_file(io.BytesIO(image), mimetype=mimetype)
+    return 'No playlist image found'
 
 @bp.route('/crop_circle_50px/<int:id>')
 def crop_circle_50px(id):
@@ -148,7 +153,6 @@ def settings():
     return render_template('user/settings.html', get_unseen_messages_count=get_unseen_messages_count, get_unseen_notifications_count=get_unseen_notifications_count, has_pfp=has_pfp)
 
 @bp.route('/<int:id>/delete_pfp', methods=('POST',))
-@login_required
 def delete_pfp(id):
     db = get_db()
     db.execute(
@@ -159,7 +163,6 @@ def delete_pfp(id):
     return redirect(url_for('user.settings'))
 
 @bp.route('/<int:friend_id>/send_friend_request', methods=('POST',))
-@login_required
 def send_friend_request(friend_id):
     db = get_db()
     db.execute(
@@ -177,7 +180,6 @@ def send_friend_request(friend_id):
     return f"<script>window.location = '{request.referrer}'</script>"
 
 @bp.route('/<int:friend_id>/cancel_friend_request', methods=('POST',))
-@login_required
 def cancel_friend_request(friend_id):
     db = get_db()
     db.execute(
@@ -195,7 +197,6 @@ def cancel_friend_request(friend_id):
     return f"<script>window.location = '{request.referrer}'</script>"
 
 @bp.route('/<int:friend_id>/accept_friend_request', methods=('POST',))
-@login_required
 def accept_friend_request(friend_id):
     db = get_db()
     friend = get_user(friend_id)
@@ -223,7 +224,6 @@ def accept_friend_request(friend_id):
     return f"<script>window.location = '{request.referrer}'</script>"
 
 @bp.route('/<int:friend_id>/decline_friend_request', methods=('POST',))
-@login_required
 def decline_friend_request(friend_id):
     db = get_db()
     db.execute(
@@ -234,7 +234,6 @@ def decline_friend_request(friend_id):
     return f"<script>window.location = '{request.referrer}'</script>"
 
 @bp.route('/<int:friend_id>/unfriend', methods=('POST',))
-@login_required
 def unfriend(friend_id):
     db = get_db()
     friend = get_user(friend_id)
@@ -262,7 +261,6 @@ def unfriend(friend_id):
     db.commit()
     return f"<script>window.location = '{request.referrer}'</script>"
 
-@login_required
 def get_relationship(friend_id):
     db = get_db()
     user_id = g.user['id']

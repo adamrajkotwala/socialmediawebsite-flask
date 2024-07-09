@@ -2,6 +2,12 @@
 
 {% block header %}
   <h1>{% block title %}Settings{% endblock %}</h1>
+  {% if g.user['is_spotify_connected'] == 0 %}
+    <a class="action" href="{{ url_for('api.spotify_login') }}">Connect Your Spotify</a>
+  {% else %}
+    <a class="action" href="{{ url_for('api.disconnect_spotify') }}">Disconnect Spotify</a>
+  {% endif %}
+  <a class="action" href="{{ url_for('api.get_user_json')}}"> Your Account JSON </a>
   <a class="action" href="{{ url_for('auth.change_password', id=g.user['id']) }}"> Change Password </a>
   <a class="action" href="{{ url_for('auth.logout') }}"> Log Out </a>
   <a class="action" href="{{ url_for('auth.delete_acc') }}" style="color: red"> Delete Account </a>

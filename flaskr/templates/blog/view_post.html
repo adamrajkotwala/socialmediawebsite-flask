@@ -1,135 +1,154 @@
 {% extends 'base.html' %}
 
 {% block header %}
-  <h1> 
-    <div class = "small_pfp">
-      {% if g.user['id'] == post['author_id'] and has_pfp(g.user['id']) %}
-          <br>
-          <a href="{{ url_for('user.user_profile') }}"><img src="{{ url_for('user.crop_circle_50px', id=g.user['id']) }}" alt="Feed Profile Picture"></a>
-      {% elif has_pfp(post['author_id']) %}
-          <br>
-          <a href="{{ url_for('user.nonuser_profile', username=post['username']) }}"><img src="{{ url_for('user.crop_circle_50px', id=post['author_id']) }}" alt="Feed Profile Picture"></a>
-      {% else %}
-          <br>
-      {% endif %}
-    </div>
-  </h1>
-  {% if post['is_edited'] != 1 %}
-    <div class="about">Posted by
-      {% if g.user['id'] != post['author_id'] %}
-        <a href="{{ url_for('user.nonuser_profile', username=post['username']) }}">{{ post['username'] }}</a>
-      {% else %}
-        <a href="{{ url_for('user.user_profile', username=post['username']) }}">{{ post['username'] }}</a>
-      {% endif %}
-        on {{ post['created'] }}
-    </div>
+<h1>
+  <div class="small_pfp">
+    {% if g.user['id'] == post['author_id'] and has_pfp(g.user['id']) %}
+    <br>
+    <a href="{{ url_for('user.user_profile') }}"><img src="{{ url_for('user.crop_circle_50px', id=g.user['id']) }}"
+        alt="Feed Profile Picture"></a>
+    {% elif has_pfp(post['author_id']) %}
+    <br>
+    <a href="{{ url_for('user.nonuser_profile', username=post['username']) }}"><img
+        src="{{ url_for('user.crop_circle_50px', id=post['author_id']) }}" alt="Feed Profile Picture"></a>
+    {% else %}
+    <br>
+    {% endif %}
+  </div>
+</h1>
+{% if post['is_edited'] != 1 %}
+<div class="about">Posted by
+  {% if g.user['id'] != post['author_id'] %}
+  <a href="{{ url_for('user.nonuser_profile', username=post['username']) }}">{{ post['username'] }}</a>
   {% else %}
-    <div class="about">edited by
-      {% if g.user['id'] != post['author_id'] %}
-        <a href="{{ url_for('user.nonuser_profile', username=post['username']) }}">{{ post['username'] }}</a>
-      {% else %}
-        <a href="{{ url_for('user.user_profile', username=post['username']) }}">{{ post['username'] }}</a>
-      {% endif %}
-        on {{ post['created'] }}
-    </div>
+  <a href="{{ url_for('user.user_profile', username=post['username']) }}">{{ post['username'] }}</a>
   {% endif %}
+  on {{ post['created'] }}
+</div>
+{% else %}
+<div class="about">edited by
+  {% if g.user['id'] != post['author_id'] %}
+  <a href="{{ url_for('user.nonuser_profile', username=post['username']) }}">{{ post['username'] }}</a>
+  {% else %}
+  <a href="{{ url_for('user.user_profile', username=post['username']) }}">{{ post['username'] }}</a>
+  {% endif %}
+  on {{ post['created'] }}
+</div>
+{% endif %}
 {% endblock %}
 
 {% block content %}
- <h1>{{ post['title'] }}</h1>
-    {% if post['body'] %}
-        <div>
-            <p>{{ post['body'] }}</p>
-        </div>
+<h1>{{ post['title'] }}</h1>
+{% if post['body'] %}
+<div>
+  <p>{{ post['body'] }}</p>
+</div>
+{% else %}
+<br>
+{% endif %}
+<div class="stats">
+  {% if post['like_count'] != 1 %}
+  {{ post['like_count'] }} Likes</a> &nbsp;&nbsp;&nbsp;
+  {% else %}
+  {{ post['like_count'] }} Like</a> &nbsp;&nbsp;&nbsp;
+  {% endif %}
+  {% if post['comment_count'] != 1 %}
+  {{ post['comment_count'] }} Comments</a> &nbsp;&nbsp;&nbsp;
+  {% else %}
+  {{ post['comment_count'] }} Comment</a> &nbsp;&nbsp;&nbsp;
+  {% endif %}
+  {% if g.user['id'] == post['author_id'] %}
+  <a class="action" href="{{ url_for('blog.update_post', id=post['id']) }}"><img
+      src="{{ url_for('static', filename='edit-post.png') }}" alt="Edit Post" class="edit_button"
+      style="width: 18px; height: 18px; "></a>
+  <form action="{{ url_for('blog.delete', id=post['id']) }}" method="post" style="display:inline;">
+    <button type="submit" style="background:none; border:none; padding:0; cursor:pointer;">
+      <img src="{{ url_for('static', filename='trash.svg') }}" alt="Delete Post" class="edit_button"
+        style="margin-left: 6px; width: 18px; height: 18px;">
+    </button>
+  </form>
+  {% endif %}
+  <br>
+  <div class="post_buttons">
+    {% if has_liked_post(g.user['id'], post['id']) %}
+    <form action="{{ url_for('blog.like_post', id=post['id']) }}" method='POST'>
+      <div class="like_button"><button type="submit"><img src="{{ url_for('static', filename='cool-like-green.png') }}"
+            alt="Unlike"></button></div>
+    </form>
     {% else %}
-        <br>
+    <form action="{{ url_for('blog.like_post', id=post['id']) }}" method='POST'>
+      <div class="like_button"><button type="submit"><img src="{{ url_for('static', filename='cool-like.png') }}"
+            alt="Like"></button></div>
+    </form>
     {% endif %}
-        <div class = "stats">
-            {% if post['like_count'] != 1 %} 
-              {{ post['like_count'] }} Likes</a> &nbsp;&nbsp;&nbsp;
-            {% else %}
-              {{ post['like_count'] }} Like</a> &nbsp;&nbsp;&nbsp;
-            {% endif %}
-            {% if post['comment_count'] != 1 %} 
-              {{ post['comment_count'] }} Comments</a> &nbsp;&nbsp;&nbsp;
-            {% else %}
-              {{ post['comment_count'] }} Comment</a> &nbsp;&nbsp;&nbsp;
-            {% endif %}
-            {% if g.user['id'] == post['author_id'] %}
-              <a class="action" href="{{ url_for('blog.update_post', id=post['id']) }}"><img src="{{ url_for('static', filename='edit-post.png') }}" alt="Edit Post" class="edit_button" style= "width: 18px; height: 18px; "></a>
-              <form action="{{ url_for('blog.delete', id=post['id']) }}" method="post" style="display:inline;">
-                <button type="submit" style="background:none; border:none; padding:0; cursor:pointer;">
-                  <img src="{{ url_for('static', filename='trash.svg') }}" alt="Delete Post" class="edit_button" style="margin-left: 6px; width: 18px; height: 18px;">
-                </button>
-              </form>
-            {% endif %} 
-            <br>
-            <div class="post_buttons">
-              {% if has_liked_post(g.user['id'], post['id']) %}
-                  <form action="{{ url_for('blog.like_post', id=post['id']) }}" method='POST'>
-                      <div class="like_button"><button type="submit"><img src="{{ url_for('static', filename='cool-like-green.png') }}" alt="Unlike"></button></div>
-                  </form>
-              {% else %}
-                  <form action="{{ url_for('blog.like_post', id=post['id']) }}" method='POST'>
-                      <div class="like_button"><button type="submit"><img src="{{ url_for('static', filename='cool-like.png') }}" alt="Like"></button></div>
-                  </form>
-              {% endif %}
-            </div>
-        </div>
-        <hr>
-    <div>
-        <p>{{ 'Comments:' }}<hr></p>
-        {% for comment in comments %}
-        <article class="post">
-          <br>
-          <div class = "small_pfp">
-            {% if g.user == comment['author_id'] and g.user['profile_picture'] %}
-              <img src="{{ url_for('user.crop_circle_50px', id=g.user['id']) }}" alt="Profile Picture">
-            {% elif has_pfp(comment['author_id']) %}
-              <img src="{{ url_for('user.crop_circle_50px', id=comment['author_id']) }}" alt="Profile Picture">
-            {% endif %}
-          </div>
-            <header>
-              <div>
-                <br>
-                {% if comment['is_edited'] != 1 %}
-                  <div class="about">by
-                    {% if g.user['id'] != comment['author_id'] %}
-                      <a href="{{ url_for('user.nonuser_profile', username=comment['author_username']) }}">{{ comment['author_username'] }}</a>
-                    {% else %}
-                      <a href="{{ url_for('user.user_profile', username=comment['author_username']) }}">{{ comment['author_username'] }}</a>
-                    {% endif %}
-                      on {{ comment['created'] }}
-                  </div>
-                {% else %}
-                  <div class="about">edited by
-                    {% if g.user['id'] != comment['author_id'] %}
-                      <a href="{{ url_for('user.nonuser_profile', username=comment['author_username']) }}">{{ comment['author_username'] }}</a>
-                    {% else %}
-                      <a href="{{ url_for('user.user_profile', username=comment['author_username']) }}">{{ comment['author_username'] }}</a>
-                    {% endif %}
-                      on {{ comment['created'] }}
-                  </div>
-                {% endif %}
-              </div>
-            </header>
-            <p class="body">{{ comment['body'] }}</p>
-            {% if g.user['id'] == comment['author_id'] %}            
-              <a class="action" href="{{ url_for('blog.update_comment', post_id=comment['post_id'], id=comment['author_id']) }}"><img src="{{ url_for('static', filename='edit-post.png') }}" alt="Edit Comment" class="edit_button" style= "width: 18px; height: 18px; "></a>
-              <form action="{{ url_for('blog.delete_comment', id=comment['id'], post_id=comment['post_id']) }}" method="post" style="display:inline;">
-                <button type="submit" style="background:none; border:none; padding:0; cursor:pointer;">
-                  <img src="{{ url_for('static', filename='trash.svg') }}" alt="Delete Post" class="edit_button" style="margin-left: 6px; width: 18px; height: 18px;">
-                </button>
-              </form>
-            {% endif %}
-        </article>
-        <hr>
-        {% endfor %}
-        <form class="centered-form" method="post">
-            <label for="comment">Add Comment</label>
-            <input name="comment" id="comment" required>
-            <br>
-            <div class="comment-button"><button type="submit"><img src="{{ url_for('static', filename='comment.png') }}" alt="Add Comment" class="shrink-comment-button"></button></div>
-        </form>
+  </div>
+</div>
+<hr>
+<div>
+  <p>{{ 'Comments:' }}
+    <hr>
+  </p>
+  {% for comment in comments %}
+  <article class="post">
+    <div class="small_pfp">
+      {% if g.user == comment['author_id'] and g.user['profile_picture'] %}
+      <br>
+      <img src="{{ url_for('user.crop_circle_50px', id=g.user['id']) }}" alt="Profile Picture">
+      {% elif has_pfp(comment['author_id']) %}
+      <br>
+      <img src="{{ url_for('user.crop_circle_50px', id=comment['author_id']) }}" alt="Profile Picture">
+      {% endif %}
     </div>
+    <header>
+      <div>
+        <br>
+        {% if comment['is_edited'] != 1 %}
+        <div class="about">by
+          {% if g.user['id'] != comment['author_id'] %}
+          <a href="{{ url_for('user.nonuser_profile', username=comment['author_username']) }}">{{
+            comment['author_username'] }}</a>
+          {% else %}
+          <a href="{{ url_for('user.user_profile', username=comment['author_username']) }}">{{
+            comment['author_username'] }}</a>
+          {% endif %}
+          on {{ comment['created'] }}
+        </div>
+        {% else %}
+        <div class="about">edited by
+          {% if g.user['id'] != comment['author_id'] %}
+          <a href="{{ url_for('user.nonuser_profile', username=comment['author_username']) }}">{{
+            comment['author_username'] }}</a>
+          {% else %}
+          <a href="{{ url_for('user.user_profile', username=comment['author_username']) }}">{{
+            comment['author_username'] }}</a>
+          {% endif %}
+          on {{ comment['created'] }}
+        </div>
+        {% endif %}
+      </div>
+    </header>
+    <p class="body">{{ comment['body'] }}</p>
+    {% if g.user['id'] == comment['author_id'] %}
+    <a class="action" href="{{ url_for('blog.update_comment', post_id=comment['post_id'], id=comment['id']) }}"><img
+        src="{{ url_for('static', filename='edit-post.png') }}" alt="Edit Comment" class="edit_button"
+        style="width: 18px; height: 18px; "></a>
+    <form action="{{ url_for('blog.delete_comment', id=comment['id'], post_id=comment['post_id']) }}" method="post"
+      style="display:inline;">
+      <button type="submit" style="background:none; border:none; padding:0; cursor:pointer;">
+        <img src="{{ url_for('static', filename='trash.svg') }}" alt="Delete Post" class="edit_button"
+          style="margin-left: 6px; width: 18px; height: 18px;">
+      </button>
+    </form>
+    {% endif %}
+  </article>
+  <hr>
+  {% endfor %}
+  <form class="centered-form" method="post">
+    <label for="comment">Add Comment</label>
+    <input name="comment" id="comment" required>
+    <br>
+    <div class="comment-button"><button type="submit"><img src="{{ url_for('static', filename='comment.png') }}"
+          alt="Add Comment" class="shrink-comment-button"></button></div>
+  </form>
+</div>
 {% endblock %}

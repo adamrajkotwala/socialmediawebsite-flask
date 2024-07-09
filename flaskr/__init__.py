@@ -3,6 +3,7 @@ import os
 from flask import Flask
 from flask_mail import Mail
 
+
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
@@ -56,6 +57,9 @@ def create_app(test_config=None):
 
     from . import inbox
     app.register_blueprint(inbox.bp)
+
+    from . import api
+    app.register_blueprint(api.bp)
 
     from . import functions
     app.register_blueprint(functions.bp)

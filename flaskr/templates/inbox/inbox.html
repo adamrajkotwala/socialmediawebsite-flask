@@ -53,7 +53,7 @@
                           {% else %}
                               <p style="color: rgba(211, 211, 235, 0.651);">Delivered</p>
                           {% endif %}
-                      {% else %}
+                      {% elif conversation['first_last_sender_id'] != None %}
                           <p>Them: <q>{{ conversation['first_last_message_preview'] }}</q> </p>
                           <p>{{ conversation['first_last_message_time'] }}</p>
                           {% if conversation['is_first_last_message_read'] != 1 %}
@@ -69,7 +69,7 @@
                           {% else %}
                               <p style="color: rgba(211, 211, 235, 0.651);">Delivered</p>
                           {% endif %}
-                      {% else %}
+                      {% elif conversation['second_last_sender_id'] != None %}
                           <p>Them: <q>{{ conversation['second_last_message_preview'] }}</q> </p>
                           <p>{{ conversation['second_last_message_time'] }}</p>
                           {% if conversation['is_second_last_message_read'] != 1 %}

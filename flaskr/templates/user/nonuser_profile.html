@@ -1,101 +1,181 @@
 {% extends 'base.html' %}
 
 {% block header %}
-  <h1>{{ user['username'] }}</h1>
-  {% if relationship['status'] == 2 %}
-    <a class="action" href="{{ url_for('inbox.conversation', user_id=g.user['id'], other_user_id=user['id']) }}">Conversation</a>
-    <form id="relationship" action="{{ url_for('user.unfriend', friend_id=user['id']) }}" method="POST">
-      <div class="like_button"><button type="submit"><img src="{{ url_for('static', filename='unfriend.png') }}" alt="Unfriend" style="margin-top: 8px; margin-left: 14px;"></button></div>
-    </form>
-  {% elif relationship is none %}
-    <a class="action" href="{{ url_for('inbox.conversation', user_id=g.user['id'], other_user_id=user['id']) }}">Conversation</a>
-    <form action="{{ url_for('user.send_friend_request', friend_id=user['id']) }}" method="POST">
-      <div class="like_button"><button type="submit"><img src="{{ url_for('static', filename='add_friend.svg') }}" alt="Add Friend" style="margin-top: 8px; margin-left: 14px;"></button></div>
-    </form>
-  {% elif relationship['status'] == 1 %}
-    {% if relationship['first_user_id'] == user['id'] %}
-      <a class="action" href="{{ url_for('inbox.conversation', user_id=g.user['id'], other_user_id=user['id']) }}">Conversation</a>
-      <form id="relationship" action="{{ url_for('user.accept_friend_request', friend_id=user['id']) }}" method="POST">
-        <div class="like_button"><button type="submit"><img src="{{ url_for('static', filename='check.png') }}" alt="Accept Request" style="margin-top: 8px; margin-left: 30px;"></button></div>
-      </form>
-      <form id="relationship" action="{{ url_for('user.decline_friend_request', friend_id=user['id']) }}" method="POST">
-        <div class="like_button"><button type="submit"><img src="{{ url_for('static', filename='decline.png') }}" alt="Decline Request" style="margin-top: 8px; margin-left: 14px;"></button></div>
-      </form>
-    {% else %}
-      <a class="action" href="{{ url_for('inbox.conversation', user_id=g.user['id'], other_user_id=user['id']) }}">Conversation</a>
-      <form id="relationship" action="{{ url_for('user.cancel_friend_request', friend_id=user['id']) }}" method="POST">
-        <div class="like_button"><button type="submit"><img src="{{ url_for('static', filename='cancel.svg') }}" alt="Cancel Request" style="margin-top: 8px; margin-left: 14px;"></button></div>
-    {% endif %}
-  {% endif %}
-{% endblock %}
-
-{% block content %}
-  {% if user['profile_picture'] %}
-    <br>
-    <img src="{{ url_for('user.profile_picture', id=user['id']) }}" alt="Profile Picture">
-  {% endif %}
-  {% if user['friend_count'] != 1 %} 
-    <h1><a class="action" href="{{ url_for('user.view_friends', id=user['id']) }}" style="font-size: 17px;">{{ user['friend_count'] }} Friends</a></h1>
-  {% else %}
-  <h1><a class="action" href="{{ url_for('user.view_friends', id=user['id']) }}" style="font-size: 17px;">{{ user['friend_count'] }} Friend</a></h1>
-  {% endif %}
-  {% if user['bio'] %}
-    <div>
-      <p>{{ user['bio'] }}</p>
-    </div>
-  {% endif %}
-  <hr>
-  <br>
-  <div style="display: flex; justify-content: space-between; align-items: center;">
-    <span style="font-size: 22px; font-weight: 550; margin-bottom: 16px;">Posts</span>
+<h1>
+  {{ user['username'] }}
+</h1>
+{% if relationship['status'] == 2 %}
+<a class="action" href="{{ url_for('inbox.start_conversation', recipient_username=user['username']) }}">
+  Conversation
+</a>
+<form id="relationship" action="{{ url_for('user.unfriend', friend_id=user['id']) }}" method="POST">
+  <div class="like_button">
+    <button type="submit">
+      <img src="{{ url_for('static', filename='unfriend.png') }}" alt="Unfriend"
+        style="margin-top: 8px; margin-left: 14px;">
+    </button>
   </div>
-  <hr>
-  {% for post in posts|reverse %}
+</form>
+{% elif relationship is none %}
+<a class="action" href="{{ url_for('inbox.start_conversation', recipient_username=user['username']) }}">
+  Conversation
+</a>
+<form action="{{ url_for('user.send_friend_request', friend_id=user['id']) }}" method="POST">
+  <div class="like_button">
+    <button type="submit">
+      <img src="{{ url_for('static', filename='add_friend.svg') }}" alt="Add Friend"
+        style="margin-top: 8px; margin-left: 14px;">
+    </button>
+  </div>
+</form>
+{% elif relationship['status'] == 1 %}
+{% if relationship['first_user_id'] == user['id'] %}
+<a class="action" href="{{ url_for('inbox.start_conversation', recipient_username=user['username']) }}">
+  Conversation
+</a>
+<form id="relationship" action="{{ url_for('user.accept_friend_request', friend_id=user['id']) }}" method="POST">
+  <div class="like_button">
+    <button type="submit">
+      <img src="{{ url_for('static', filename='check.png') }}" alt="Accept Request"
+        style="margin-top: 8px; margin-left: 30px;">
+    </button>
+  </div>
+</form>
+<form id="relationship" action="{{ url_for('user.decline_friend_request', friend_id=user['id']) }}" method="POST">
+  <div class="like_button">
+    <button type="submit">
+      <img src="{{ url_for('static', filename='decline.png') }}" alt="Decline Request"
+        style="margin-top: 8px; margin-left: 14px;">
+    </button>
+  </div>
+</form>
+{% else %}
+<a class="action" href="{{ url_for('inbox.start_conversation', recipient_username=user['username']) }}">
+  Conversation
+</a>
+<form id="relationship" action="{{ url_for('user.cancel_friend_request', friend_id=user['id']) }}" method="POST">
+  <div class="like_button">
+    <button type="submit">
+      <img src="{{ url_for('static', filename='cancel.svg') }}" alt="Cancel Request"
+        style="margin-top: 8px; margin-left: 14px;">
+    </button>
+  </div>
+  {% endif %}
+  {% endif %}
+  {% endblock %}
+
+  {% block content %}
+  <div>
+    {% if user['profile_picture'] or user['is_spotify_connected'] %}
+    <div style="height: 300px;">
+      <ul class="horizontal-list" style="height: 300px;">
+        <li>
+          <div style="width: 222px">
+            {% if user['profile_picture'] %}
+            <br>
+            <img src="{{ url_for('user.profile_picture', id=user['id']) }}" alt="Profile Picture">
+            {% endif %}
+          </div>
+        </li>
+        <li style="width: 800px !important;">
+          {% include "/user/playlists.html" %}
+        </li>
+      </ul>
+    </div>
+    {% endif %}
+    {% if user['friend_count'] != 1 %}
+    <h1>
+      <a class="action" href="{{ url_for('user.view_friends', id=user['id']) }}" style="font-size: 17px;">
+        {{ user['friend_count'] }} Friends
+      </a>
+    </h1>
+    {% else %}
+    <h1>
+      <a class="action" href="{{ url_for('user.view_friends', id=user['id']) }}" style="font-size: 17px;">
+        {{ user['friend_count'] }} Friend
+      </a>
+    </h1>
+    {% endif %}
+    {% if user['bio'] %}
+    <div>
+      <p>
+        {{ user['bio'] }}
+      </p>
+    </div>
+    {% endif %}
+    <hr>
+    <br>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 22px; font-weight: 550; margin-bottom: 16px;">
+        Posts
+      </span>
+    </div>
+    <hr>
+    {% for post in posts|reverse %}
     <article class="post">
       <header>
         <div>
-          <h1><a href="{{ url_for('blog.view_post', id=post['id']) }}">{{ post['title'] }}</a></h1>
+          <h1>
+            <a href="{{ url_for('blog.view_post', id=post['id']) }}">
+              {{ post['title'] }}
+            </a>
+          </h1>
           <br>
           <div class="about">
-            {% if post['is_edited'] != 1 %} 
-              {{ post['created'] }}
+            {% if post['is_edited'] != 1 %}
+            {{ post['created'] }}
             {% else %}
-              edited on {{ post['created'] }}
+            edited on {{ post['created'] }}
             {% endif %}
           </div>
         </div>
       </header>
-      <p class="body">{{ post['body'] }}</p>
-      <div class = "stats">
-        {% if post['like_count'] != 1 %} 
-          {{ post['like_count'] }} Likes</a> &nbsp;&nbsp;&nbsp;
+      <p class="body">
+        {{ post['body'] }}
+      </p>
+      <div class="stats">
+        {% if post['like_count'] != 1 %}
+        {{ post['like_count'] }} Likes
+        </a> &nbsp;&nbsp;&nbsp;
         {% else %}
-          {{ post['like_count'] }} Like</a> &nbsp;&nbsp;&nbsp;
+        {{ post['like_count'] }} Like
+        </a> &nbsp;&nbsp;&nbsp;
         {% endif %}
-        {% if post['comment_count'] != 1 %} 
-          {{ post['comment_count'] }} Comments</a> &nbsp;&nbsp;&nbsp;
+        {% if post['comment_count'] != 1 %}
+        {{ post['comment_count'] }} Comments
+        </a> &nbsp;&nbsp;&nbsp;
         {% else %}
-          {{ post['comment_count'] }} Comment</a> &nbsp;&nbsp;&nbsp;
-        {% endif %} 
+        {{ post['comment_count'] }} Comment
+        </a> &nbsp;&nbsp;&nbsp;
+        {% endif %}
         <br>
         <div class="post_buttons">
           {% if has_liked_post(g.user['id'], post['id']) %}
-              <form action="{{ url_for('blog.like_post', id=post['id']) }}" method='POST'>
-                  <div class="like_button"><button type="submit"><img src="{{ url_for('static', filename='cool-like-green.png') }}" alt="Unlike"></button></div>
-              </form>
+          <form action="{{ url_for('blog.like_post', id=post['id']) }}" method='POST'>
+            <div class="like_button">
+              <button type="submit">
+                <img src="{{ url_for('static', filename='cool-like-green.png') }}" alt="Unlike">
+              </button>
+            </div>
+          </form>
           {% else %}
-              <form action="{{ url_for('blog.like_post', id=post['id']) }}" method='POST'>
-                  <div class="like_button"><button type="submit"><img src="{{ url_for('static', filename='cool-like.png') }}" alt="Like"></button></div>
-              </form>
+          <form action="{{ url_for('blog.like_post', id=post['id']) }}" method='POST'>
+            <div class="like_button">
+              <button type="submit">
+                <img src="{{ url_for('static', filename='cool-like.png') }}" alt="Like">
+              </button>
+            </div>
+          </form>
           {% endif %}
           <a href="{{ url_for('blog.view_post', id=post['id']) }}" class="comment_link">
-              <img src="{{ url_for('static', filename='comment.png') }}" alt="Comments" class="comment_button">
+            <img src="{{ url_for('static', filename='comment.png') }}" alt="Comments" class="comment_button">
           </a>
         </div>
       </div>
     </article>
     {% if not loop.last %}
-      <hr>
+    <hr>
     {% endif %}
-  {% endfor %}
-{% endblock %}
+    {% endfor %}
+  </div>
+  {% endblock %}

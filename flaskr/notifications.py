@@ -1,16 +1,19 @@
 from flask import Flask, Blueprint, g, redirect, render_template, request, url_for
 
+from .functions import get_unseen_notifications_count, has_pfp, get_unseen_messages_count
+
 from flaskr.db import get_db
 
 from flask import Flask
 
-from .functions import get_unseen_notifications_count, has_pfp, get_unseen_messages_count
+from flaskr.auth import login_required
 
 app = Flask(__name__) 
 
 bp = Blueprint('notifications', __name__, url_prefix='/notifications')
 
 @bp.route('/notifications')
+@login_required
 def get_notifications():
     user_id = g.user['id']
     db = get_db()
@@ -50,33 +53,4 @@ def get_friend_requests(user_id):
         (user_id,)
     ).fetchall()
     return friend_requests
-
-@bp.route('/new_message', methods=('GET', 'POST'))
-def new_message():
-    user_id = g.user['id']
-    messages = get_messages(user_id)
-
-    if request.method == 'POST':
-        recipient = request.form.get('recipient')
-        content = request.form.get('content')
-
-        db = get_db()
-        db.execute(
-            'INSERT INTO message (sender_id, recipient_id, content) VALUES (?, ?, ?)',
-            (user_id, recipient, content)
-        )
-        db.commit()
-
-        message_id = db.execute('SELECT last_insert_rowid()').fetchone()[0]
-
-        db.execute(
-            'INSERT INTO inbox (user_id, message_id) VALUES (?, ?)',
-            (recipient, message_id)
-        )
-        db.commit()
-
-        return redirect(url_for('notifications.notifications'))
-    
-    else:
-        return render_template('notifications/new_message.html', has_pfp=has_pfp, get_unseen_messages_count=get_unseen_messages_count, get_unseen_notifications_count=get_unseen_notifications_count, messages=messages)
     

@@ -171,3 +171,11 @@ def get_comment(id, check_author=True):
         abort(403)
 
     return comment
+
+def get_user_playlists(user_id):
+    db = get_db()
+    playlists = db.execute(
+        'SELECT * FROM playlist WHERE user_id = ?',
+        (user_id,)
+    ).fetchall()
+    return playlists

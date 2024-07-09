@@ -1,17 +1,21 @@
 {% extends 'base.html' %}
 
 {% block header %}
-  <h1>{% block title %}Edit Comment"{% endblock %}</h1>
+  <h1>{% block title %}Edit Comment{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
-  <form method="post">
+
+  <form id="myForm" method="post">
     <label for="body">Body</label>
     <textarea name="body" id="body">{{ request.form['body'] or comment['body'] }}</textarea>
     <input type="submit" value="Save">
   </form>
   <hr>
-  <form action="{{ url_for('blog.delete_comment', post_id=post['id'], id=comment['id']) }}" method="post">
-    <input class="danger" type="submit" value="Delete" onclick="return confirm('Are you sure?');">
-  </form>
+  <img src="{{ url_for('static', filename='submit.png') }}" alt="Submit" id="submitImage" style="width: 30px; height: 30px; cursor: pointer;">
+  <script>
+    document.getElementById("submitImage").addEventListener("click", function() {
+      document.getElementById("myForm").submit();
+    });
+  </script>
 {% endblock %}
