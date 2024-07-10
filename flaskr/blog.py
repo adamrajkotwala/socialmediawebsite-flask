@@ -83,8 +83,9 @@ def update_post(id):
 
     return render_template('blog/update_post.html', post=post, has_pfp=has_pfp, get_unseen_messages_count=get_unseen_messages_count, get_unseen_notifications_count=get_unseen_notifications_count)
 
-@bp.route('/<int:id>/delete', methods=('POST',))
-def delete(id):
+@bp.route('/<int:id>/delete_post', methods=('POST',))
+@login_required
+def delete_post(id):
     get_post(id)
     db = get_db()
     db.execute('DELETE FROM post WHERE id = ?', (id,))
@@ -122,6 +123,7 @@ def update_comment(post_id, id):
     return render_template('blog/update_comment.html', post=post, get_unseen_messages_count=get_unseen_messages_count, comment=comment, has_pfp=has_pfp, get_unseen_notifications_count=get_unseen_notifications_count)
 
 @bp.route('/<int:post_id>/<int:id>/delete_comment', methods=('POST',))
+@login_required
 def delete_comment(post_id, id):
     db = get_db()
     db.execute('DELETE FROM comment WHERE id = ?', (id,))

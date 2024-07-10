@@ -3,6 +3,7 @@ import requests
 import urllib.parse
 from .functions import *
 from datetime import datetime
+from flaskr.auth import login_required
 from flaskr.db import get_db
 from PIL import Image
 import io
@@ -36,7 +37,8 @@ def user_row_to_dict(row):
         'friend_count': row['friend_count']
     }
 
-@bp.route('/get_user_json', methods=['GET'])
+@bp.route('/get_user_json', methods=('GET',))
+@login_required
 def get_user_json():
     db = get_db()
     user_obj = db.execute('SELECT * FROM user WHERE id = ?', (g.user['id'],)).fetchone()

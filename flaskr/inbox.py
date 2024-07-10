@@ -165,8 +165,6 @@ def conversation(user_id, other_user_id):
 
         return render_template('inbox/conversation.html', get_unseen_messages_count=get_unseen_messages_count, delete_conversation=delete_conversation, messages=messages, get_unseen_notifications_count=get_unseen_notifications_count, has_pfp=has_pfp, conversation=conversation, user_id=user_id, other_user=other_user)
 
-# using login required causes an error with this function 
-@bp.route('/<int:user_id>/<int:other_user_id>/get_conversation', methods=('GET',))
 def get_conversation(user_id, other_user_id):
     db = get_db()
     conversation = db.execute(
@@ -177,7 +175,14 @@ def get_conversation(user_id, other_user_id):
     ).fetchone()
     return conversation
 
+# using login required causes an error with this function 
+@bp.route('/<int:user_id>/<int:other_user_id>/get_conversation', methods=('GET',))
+@login_required
+def url_get_conversation(user_id, other_user_id):
+    return get_conversation(user_id, other_user_id)
+
 @bp.route('/<int:user_id>/<int:other_user_id>/delete_conversation', methods=('POST',))
+@login_required
 def delete_conversation(user_id, other_user_id):
     db = get_db()
     conversation = get_conversation(user_id, other_user_id)
@@ -202,6 +207,7 @@ def delete_conversation(user_id, other_user_id):
     return f"<script>window.location = '{request.referrer}'</script>"
 
 @bp.route('/<int:user_id>/<int:other_user_id>/soft_delete_conversation', methods=('POST',))
+@login_required
 def soft_delete_conversation(user_id, other_user_id):
     db = get_db()
     conversation = get_conversation(user_id, other_user_id)
@@ -390,6 +396,7 @@ def delete_message(message_id):
     return
 
 @bp.route('/<int:message_id>/soft_delete_message', methods=('POST',))
+@login_required
 def soft_delete_message(message_id):
     db = get_db()
     message = get_message(message_id)

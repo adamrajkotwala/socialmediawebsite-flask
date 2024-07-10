@@ -13,9 +13,6 @@
     <input type="submit" value="Save">
   </form>
   <hr>
-  <form action="{{ url_for('blog.delete', id=post['id']) }}" method="post">
-    <input class="danger" type="submit" value="Delete" onclick="return confirm('Are you sure?');">
-  </form>
   <img src="{{ url_for('static', filename='submit.png') }}" alt="Submit" id="submitImage" style="width: 30px; height: 30px; cursor: pointer;">
   <script>
     document.getElementById("submitImage").addEventListener("click", function() {
